@@ -1,0 +1,67 @@
+function hexStringToUint8Array (hexString) {
+  if (hexString.length % 2 !== 0) {
+    throw new Error('Invalid hexString')
+  }
+  var arrayBuffer = new Uint8Array(hexString.length / 2)
+
+  for (var i = 0; i < hexString.length; i += 2) {
+    var byteValue = parseInt(hexString.substr(i, 2), 16)
+    if (isNaN(byteValue)) {
+      throw new Error('Invalid hexString')
+    }
+    arrayBuffer[i / 2] = byteValue
+  }
+
+  return arrayBuffer
+}
+function bytesToHexString (bytes) {
+  if (!bytes) {
+    return null
+  }
+
+  bytes = new Uint8Array(bytes)
+  var hexBytes = []
+
+  for (var i = 0; i < bytes.length; ++i) {
+    var byteString = bytes[i].toString(16)
+    if (byteString.length < 2) {
+      byteString = '0' + byteString
+    }
+    hexBytes.push(byteString)
+  }
+
+  return hexBytes.join('')
+}
+function asciiToUint8Array (str) {
+  var chars = []
+  for (var i = 0; i < str.length; ++i) {
+    chars.push(str.charCodeAt(i))
+  }
+  return new Uint8Array(chars)
+}
+function bytesToASCIIString (bytes) {
+  return String.fromCharCode.apply(null, new Uint8Array(bytes))
+}
+function failAndLog (error) {
+  console.log(error)
+}
+
+const hexToBuf = hex => {
+  for (var bytes = [], c = 0; c < hex.length; c += 2) { bytes.push(parseInt(hex.substr(c, 2), 16)) }
+  return new Uint8Array(bytes)
+}
+
+const bufToHex = buf => {
+  var byteArray = new Uint8Array(buf)
+  var hexString = ''
+  var nextHexByte
+
+  for (var i = 0; i < byteArray.byteLength; i++) {
+    nextHexByte = byteArray[i].toString(16)
+    if (nextHexByte.length < 2) {
+      nextHexByte = '0' + nextHexByte
+    }
+    hexString += nextHexByte
+  }
+  return hexString
+}
