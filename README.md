@@ -20,7 +20,7 @@ Add the client JS reference in your page:
 <script type="text/javascript" src="common.js"></script>
 <script type="text/javascript" src="crypto.js"></script>
 ```
-Using the client library in your app:
+Using the crypto library in your app:
 
 ```JavaScript
 console.log('start')
