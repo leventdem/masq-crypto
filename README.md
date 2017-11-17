@@ -24,11 +24,19 @@ Using the crypto library in your app:
 
 ```JavaScript
 console.log('start')
+var apiData = { POI_1: 'Tour eiffel', POI_2: 'Cafeteria'}
+
+// If no passphrase is given, it will be generated.
 setUserKey('').then(function () {
-  loadJson().then(function (encryptedJson) {
+  // encryption
+  encryptJSON(JSON.stringify(apiData), '1.0.0').then(function (encryptedJson) {
     console.log(encryptedJson)
-    decryptJson(encryptedJson).then(function (decryptedJson) {
-      console.log(decryptedJson)
+    // {"ciphertext":"f7bd4...a1fe0fd9","iv":"a033ff25534d21775be6e8c9","version":"1.0.0"}
+
+    // decryption
+    decryptJSON(JSON.parse(encryptedJson)).then(function (decryptedJson) {
+      console.log(bytesToASCIIString(decryptedJson))
+      // "{\"POI_1\":\"Tour eiffel\",\"POI_2\":\"Cafeteria\"}"
     })
   })
 })
