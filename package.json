@@ -5,9 +5,9 @@
   "main": "src/index.js",
   "scripts": {
     "clean": "rm dist/index.js",
-    "prepublish": "make clean build",
     "build": "./node_modules/.bin/babel ./src --experimental -d ./dist",
-    "dist": "npm run build && browserify ./dist/index.js --standalone CryptoMasq > dist/bundle.js && npm run clean"
+    "dist": "npm run build && browserify ./dist/index.js --standalone CryptoMasq > dist/bundle.js && npm run clean",
+    "start": "http-server ."
   },
   "author": {
     "name": "Levent Demir",
@@ -27,6 +27,8 @@
   "dependencies": {},
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.6.1"
+    "babel-preset-env": "^1.6.1",
+    "browserify": "^14.5.0",
+    "http-server": "^0.10.0"
   }
 }
