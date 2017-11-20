@@ -12,7 +12,8 @@ Object.defineProperty(exports, "__esModule", {
  */
 var deriveKey = exports.deriveKey = function deriveKey() {
   var passPhrase = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-  var iterations = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 10000;
+  var keyLenth = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 18;
+  var iterations = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 10000;
 
   if (passPhrase.length === 0) {
     passPhrase = randomString(keyLenth);
@@ -210,31 +211,5 @@ var asciiToArray = exports.asciiToArray = function asciiToArray() {
 var arrayToAscii = exports.arrayToAscii = function arrayToAscii(bytes) {
   return String.fromCharCode.apply(null, new Uint8Array(bytes));
 };
-
-// export const failAndLog = (error) => {
-//   if (debug) { console.log(error) }
-// }
-
-// Simple conversion test
-// if (arrayToAscii(asciiToArray('bonjour')) !== 'bonjour') { console.log('array <-> ascii conversion : error') } else { console.log('array <-> ascii conversion : ok ') }
-// if (arrayToHexString(hexStringToArray('11a1b2')) !== '11a1b2') { console.log('array <-> hexString conversion : error') } else { console.log('array <-> hexString conversion : ok ') }
-
-// EXAMPLE
-// export const apiData = { POI_1: 'Tour eiffel', POI_2: 'Cafeteria'}
-
-// // If no passphrase is given, it will be generated.
-// deriveKey('').then(function (derivedKey) {
-//   // encryption
-//   encryptJSON(derivedKey, apiData, '1.0.0').then(function (encryptedJson) {
-//     console.log(encryptedJson)
-//     // Object { ciphertext: "cb9a804…", iv: "145a65b6535d00b5a3cce475", version: "1.0.0" }
-
-//     // decryption
-//     decryptJSON(derivedKey, encryptedJson).then(function (decryptedJson) {
-//       console.log(arrayToAscii(decryptedJson))
-//       // {"POI_1":"Tour eiffel","POI_2":"Cafeteria"}
-//     })
-//   })
-// })
 },{}]},{},[1])(1)
 });
