@@ -79,6 +79,7 @@ CryptoMasq.encrypt = (data, key, iv, mode, additionalData) => {
 /**
  * Encrypt an object
  *
+ * @param {ArrayBuffer} key Encryption key
  * @param {object} data Basic key-pair values
  * @param {string} additionalData The authenticated data (ex. version number :1.0.1 )
  * @returns {object} Return a  JSON object with the following format :
@@ -90,13 +91,14 @@ CryptoMasq.encryptJSON = (key, data, additionalData) => {
   var iv = window.crypto.getRandomValues(new Uint8Array(12))
 
   return CryptoMasq.encrypt(dataJson, key, iv, 'AES-GCM', CryptoMasq.asciiToArray(additionalData)).then(function (result) {
-    return JSON.stringify({ciphertext: CryptoMasq.arrayToHexString(result), iv: CryptoMasq.arrayToHexString(iv), version: additionalData})
+    return {ciphertext: CryptoMasq.arrayToHexString(result), iv: CryptoMasq.arrayToHexString(iv), version: additionalData}
   })
 }
 
 /**
  * Decrypt an object
  *
+ * @param {ArrayBuffer} key Decryption key
  * @param {object} encrypted data Must contain 3 values:
  *     { ciphertext : {hexString}, iv : {hexString}, version : {string}
  * @returns {ArrayBuffer} Return the decrypted text.
@@ -202,6 +204,7 @@ CryptoMasq.failAndLog = (error) => {
   if (CryptoMasq.debug) { console.log(error) }
 }
 
+// Simple conversion test
 if (CryptoMasq.arrayToAscii(CryptoMasq.asciiToArray('bonjour')) !== 'bonjour') { console.log('array <-> ascii conversion : error') } else { console.log('array <-> ascii conversion : ok ') }
 if (CryptoMasq.arrayToHexString(CryptoMasq.hexStringToArray('11a1b2')) !== '11a1b2') { console.log('array <-> hexString conversion : error') } else { console.log('array <-> hexString conversion : ok ') }
 
@@ -211,15 +214,14 @@ const apiData = { POI_1: 'Tour eiffel', POI_2: 'Cafeteria'}
 // If no passphrase is given, it will be generated.
 CryptoMasq.deriveKey('').then(function (derivedKey) {
   // encryption
-  // const derivedKey = derivedKey
-  CryptoMasq.encryptJSON(derivedKey, JSON.stringify(apiData), '1.0.0').then(function (encryptedJson) {
+  CryptoMasq.encryptJSON(derivedKey, apiData, '1.0.0').then(function (encryptedJson) {
     console.log(encryptedJson)
-    // {"ciphertext":"f7bd4...a1fe0fd9","iv":"a033ff25534d21775be6e8c9","version":"1.0.0"}
+    // Object { ciphertext: "cb9a804…", iv: "145a65b6535d00b5a3cce475", version: "1.0.0" }
 
     // decryption
-    CryptoMasq.decryptJSON(derivedKey, JSON.parse(encryptedJson)).then(function (decryptedJson) {
+    CryptoMasq.decryptJSON(derivedKey, encryptedJson).then(function (decryptedJson) {
       console.log(CryptoMasq.arrayToAscii(decryptedJson))
-      // "{\"POI_1\":\"Tour eiffel\",\"POI_2\":\"Cafeteria\"}"
+      // {"POI_1":"Tour eiffel","POI_2":"Cafeteria"}
     })
   })
 })
