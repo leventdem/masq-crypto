@@ -1,4 +1,6 @@
-const CryptoMasq = {}
+const CryptoMasq = {
+  debug: false
+}
 
 /**
  * Generate a PBKDF2 derived key based on user given passPhrase
@@ -14,7 +16,7 @@ CryptoMasq.deriveKey = (passPhrase = '', iterations = 10000) => {
   // TODO: set this to a real value later
   let salt = new Uint8Array('')
 
-  return crypto.subtle.importKey('raw', CryptoMasq.asciiToUint8Array(passPhrase), 'PBKDF2', false, ['deriveBits', 'deriveKey']).then(function (baseKey) {
+  return crypto.subtle.importKey('raw', CryptoMasq.asciiToArray(passPhrase), 'PBKDF2', false, ['deriveBits', 'deriveKey']).then(function (baseKey) {
     return crypto.subtle.deriveBits({name: 'PBKDF2', salt: salt, iterations: iterations, hash: 'sha-256'}, baseKey, 128)
   }, CryptoMasq.failAndLog).then(function (derivedKey) {
     return new Uint8Array(derivedKey)
@@ -79,16 +81,16 @@ CryptoMasq.encrypt = (data, key, iv, mode, additionalData) => {
  *
  * @param {object} data Basic key-pair values
  * @param {string} additionalData The authenticated data (ex. version number :1.0.1 )
- * @returns {string} Return a stringified JSON object with the following format :
+ * @returns {object} Return a  JSON object with the following format :
  *     { ciphertext : {hexString}, iv : {hexString}, version : {string} }
  */
 CryptoMasq.encryptJSON = (key, data, additionalData) => {
   // Prepare context
-  var dataJson = CryptoMasq.asciiToUint8Array(JSON.stringify(data))
+  var dataJson = CryptoMasq.asciiToArray(JSON.stringify(data))
   var iv = window.crypto.getRandomValues(new Uint8Array(12))
 
-  return CryptoMasq.encrypt(dataJson, key, iv, 'AES-GCM', CryptoMasq.asciiToUint8Array(additionalData)).then(function (result) {
-    return JSON.stringify({ciphertext: CryptoMasq.bytesToHexString(result), iv: CryptoMasq.bytesToHexString(iv), version: additionalData})
+  return CryptoMasq.encrypt(dataJson, key, iv, 'AES-GCM', CryptoMasq.asciiToArray(additionalData)).then(function (result) {
+    return JSON.stringify({ciphertext: CryptoMasq.arrayToHexString(result), iv: CryptoMasq.arrayToHexString(iv), version: additionalData})
   })
 }
 
@@ -102,9 +104,9 @@ CryptoMasq.encryptJSON = (key, data, additionalData) => {
  */
 CryptoMasq.decryptJSON = (key, data) => {
   // Prepare context
-  var ciphertext = CryptoMasq.hexStringToUint8Array(data.ciphertext)
-  var additionalData = CryptoMasq.asciiToUint8Array(data.version)
-  var iv = CryptoMasq.hexStringToUint8Array(data.iv)
+  var ciphertext = CryptoMasq.hexStringToArray(data.ciphertext)
+  var additionalData = CryptoMasq.asciiToArray(data.version)
+  var iv = CryptoMasq.hexStringToArray(data.iv)
 
   return CryptoMasq.decrypt(ciphertext, key, iv, 'AES-GCM', additionalData).then(function (decrypted) {
     return decrypted
@@ -122,25 +124,14 @@ CryptoMasq.getTag = (encrypted, tagLength = 128) => {
   return encrypted.slice(encrypted.byteLength - ((tagLength + 7) >> 3))
 }
 
-// EXAMPLE
-// var apiData = { POI_1: 'Tour eiffel', POI_2: 'Cafeteria'}
-
-// If no passphrase is given, it will be generated.
-// setUserKey('').then(function () {
-//   // encryption
-//   encryptJSON(JSON.stringify(apiData), '1.0.0').then(function (encryptedJson) {
-//     console.log(encryptedJson)
-//     // {"ciphertext":"f7bd4...a1fe0fd9","iv":"a033ff25534d21775be6e8c9","version":"1.0.0"}
-
-//     // decryption
-//     decryptJSON(JSON.parse(encryptedJson)).then(function (decryptedJson) {
-//       console.log(bytesToASCIIString(decryptedJson))
-//       // "{\"POI_1\":\"Tour eiffel\",\"POI_2\":\"Cafeteria\"}"
-//     })
-//   })
-// })
-
-CryptoMasq.hexStringToUint8Array = (hexString) => {
+/**
+ * Convert hex String to ArrayBufffer
+ * ex : '11a1b2' -> Uint8Array [ 17, 161, 178 ]
+ *
+ * @param {String} hexString
+ * @returns {ArrayBuffer}
+ */
+CryptoMasq.hexStringToArray = (hexString) => {
   if (hexString.length % 2 !== 0) {
     throw new Error('Invalid hexString')
   }
@@ -157,14 +148,17 @@ CryptoMasq.hexStringToUint8Array = (hexString) => {
   return arrayBuffer
 }
 
-CryptoMasq.bytesToHexString = (bytes) => {
-  // TODO: Check this for redundancy of bytes
-
+/**
+ * Convert ArrayBufffer to hex String
+ * ex : Uint8Array [ 17, 161, 178 ] -> '11a1b2'
+ *
+ * @param {ArrayBuffer} bytes
+ * @returns {String}
+ */
+CryptoMasq.arrayToHexString = (bytes) => {
   if (!bytes) {
     return null
   }
-
-  bytes = new Uint8Array(bytes)
   let hexBytes = []
 
   for (let i = 0; i < bytes.length; ++i) {
@@ -178,7 +172,14 @@ CryptoMasq.bytesToHexString = (bytes) => {
   return hexBytes.join('')
 }
 
-CryptoMasq.asciiToUint8Array = (str = '') => {
+/**
+ * Convert ascii to ArrayBufffer
+ * ex : "bonjour" -> Uint8Array [ 98, 111, 110, 106, 111, 117, 114 ]
+ *
+ * @param {String} str
+ * @returns {ArrayBuffer}
+ */
+CryptoMasq.asciiToArray = (str = '') => {
   var chars = []
   for (let i = 0; i < str.length; ++i) {
     chars.push(str.charCodeAt(i))
@@ -186,34 +187,41 @@ CryptoMasq.asciiToUint8Array = (str = '') => {
   return new Uint8Array(chars)
 }
 
-CryptoMasq.bytesToASCIIString = (bytes) => {
+/**
+ * Convert ArrayBufffer to ascii
+ * ex : Uint8Array [ 98, 111, 110, 106, 111, 117, 114 ] -> "bonjour"
+ *
+ * @param {ArrayBuffer} bytes
+ * @returns {String}
+ */
+CryptoMasq.arrayToAscii = (bytes) => {
   return String.fromCharCode.apply(null, new Uint8Array(bytes))
 }
 
 CryptoMasq.failAndLog = (error) => {
-  console.log(error)
+  if (CryptoMasq.debug) { console.log(error) }
 }
 
-CryptoMasq.hexToBuf = (hex = '') => {
-  for (let bytes = [], c = 0; c < hex.length; c += 2) {
-    bytes.push(parseInt(hex.substr(c, 2), 16))
-  }
-  return new Uint8Array(bytes)
-}
+if (CryptoMasq.arrayToAscii(CryptoMasq.asciiToArray('bonjour')) !== 'bonjour') { console.log('array <-> ascii conversion : error') } else { console.log('array <-> ascii conversion : ok ') }
+if (CryptoMasq.arrayToHexString(CryptoMasq.hexStringToArray('11a1b2')) !== '11a1b2') { console.log('array <-> hexString conversion : error') } else { console.log('array <-> hexString conversion : ok ') }
 
-CryptoMasq.bufToHex = (buf) => {
-  var byteArray = new Uint8Array(buf)
-  var hexString = ''
-  var nextHexByte
+// EXAMPLE
+const apiData = { POI_1: 'Tour eiffel', POI_2: 'Cafeteria'}
 
-  for (var i = 0; i < byteArray.byteLength; i++) {
-    nextHexByte = byteArray[i].toString(16)
-    if (nextHexByte.length < 2) {
-      nextHexByte = '0' + nextHexByte
-    }
-    hexString += nextHexByte
-  }
-  return hexString
-}
+// If no passphrase is given, it will be generated.
+CryptoMasq.deriveKey('').then(function (derivedKey) {
+  // encryption
+  // const derivedKey = derivedKey
+  CryptoMasq.encryptJSON(derivedKey, JSON.stringify(apiData), '1.0.0').then(function (encryptedJson) {
+    console.log(encryptedJson)
+    // {"ciphertext":"f7bd4...a1fe0fd9","iv":"a033ff25534d21775be6e8c9","version":"1.0.0"}
+
+    // decryption
+    CryptoMasq.decryptJSON(derivedKey, JSON.parse(encryptedJson)).then(function (decryptedJson) {
+      console.log(CryptoMasq.arrayToAscii(decryptedJson))
+      // "{\"POI_1\":\"Tour eiffel\",\"POI_2\":\"Cafeteria\"}"
+    })
+  })
+})
 
 module.exports = CryptoMasq
