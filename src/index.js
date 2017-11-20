@@ -45,7 +45,7 @@ export const randomString = (length = 18) => {
  * @param {ArrayBuffer} additionalData The non-secret authenticated data
  * @returns {ArrayBuffer}
  */
-const decrypt = (data, key, iv, mode, additionalData) => {
+const decryptBuffer = (data, key, iv, mode, additionalData) => {
   // TODO: test input params
   return crypto.subtle.importKey('raw', key, {name: mode}, true, ['encrypt', 'decrypt']).then(function (bufKey) {
     return crypto.subtle.decrypt({name: mode, iv, additionalData: additionalData}, bufKey, data).then(function (result) {
@@ -64,7 +64,7 @@ const decrypt = (data, key, iv, mode, additionalData) => {
  * @param {ArrayBuffer} additionalData The non-secret authenticated data
  * @returns {ArrayBuffer}
  */
-const encrypt = (data, key, iv, mode, additionalData) => {
+const encryptBuffer = (data, key, iv, mode, additionalData) => {
   return crypto.subtle.importKey('raw', key, {name: mode}, true, ['encrypt', 'decrypt']).then(function (bufKey) {
     return crypto.subtle.encrypt({name: mode, iv, additionalData: additionalData}, bufKey, data).then(function (result) {
       return new Uint8Array(result)
@@ -76,17 +76,16 @@ const encrypt = (data, key, iv, mode, additionalData) => {
  * Encrypt an object
  *
  * @param {ArrayBuffer} key Encryption key
- * @param {object} data Basic key-pair values
+ * @param {object} data A string containing data (e.g. stringified JSON)
  * @param {string} additionalData The authenticated data (ex. version number :1.0.1 )
  * @returns {object} Return a  JSON object with the following format :
  *     { ciphertext : {hexString}, iv : {hexString}, version : {string} }
  */
-export const encryptJSON = (key, data, additionalData) => {
+export const encrypt = (key, data, additionalData) => {
   // Prepare context
-  const dataJson = asciiToArray(JSON.stringify(data))
   const iv = window.crypto.getRandomValues(new Uint8Array(12))
 
-  return encrypt(dataJson, key, iv, 'AES-GCM', asciiToArray(additionalData)).then(function (result) {
+  return encryptBuffer(data, key, iv, 'AES-GCM', asciiToArray(additionalData)).then(function (result) {
     return {ciphertext: arrayToHexString(result), iv: arrayToHexString(iv), version: additionalData}
   })
 }
@@ -97,17 +96,17 @@ export const encryptJSON = (key, data, additionalData) => {
  * @param {ArrayBuffer} key Decryption key
  * @param {object} encrypted data Must contain 3 values:
  *     { ciphertext : {hexString}, iv : {hexString}, version : {string}
- * @returns {ArrayBuffer} Return the decrypted text.
+ * @returns {string} Return the decrypted data as a string.
  *
  */
-export const decryptJSON = (key, data) => {
+export const decrypt = (key, data) => {
   // Prepare context
   const ciphertext = hexStringToArray(data.ciphertext)
   const additionalData = asciiToArray(data.version)
   const iv = hexStringToArray(data.iv)
 
-  return decrypt(ciphertext, key, iv, 'AES-GCM', additionalData).then(function (decrypted) {
-    return decrypted
+  return decryptBuffer(ciphertext, key, iv, 'AES-GCM', additionalData).then(function (decrypted) {
+    return arrayToAscii(decrypted)
   })
 }
 

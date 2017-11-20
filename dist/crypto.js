@@ -109,7 +109,7 @@ var encryptJSON = exports.encryptJSON = function encryptJSON(key, data, addition
  * @param {ArrayBuffer} key Decryption key
  * @param {object} encrypted data Must contain 3 values:
  *     { ciphertext : {hexString}, iv : {hexString}, version : {string}
- * @returns {ArrayBuffer} Return the decrypted text.
+ * @returns {string} Return the decrypted data as a string.
  *
  */
 var decryptJSON = exports.decryptJSON = function decryptJSON(key, data) {
@@ -119,7 +119,12 @@ var decryptJSON = exports.decryptJSON = function decryptJSON(key, data) {
   var iv = hexStringToArray(data.iv);
 
   return decrypt(ciphertext, key, iv, 'AES-GCM', additionalData).then(function (decrypted) {
-    return decrypted;
+    try {
+      return JSON.parse(arrayToAscii(decrypted));
+    } catch (err) {
+      console.log(err);
+      return {};
+    }
   });
 };
 

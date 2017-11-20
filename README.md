@@ -36,8 +36,7 @@ CryptoMasq.deriveKey('').then(function (derivedKey) {
 
     // decryption
     CryptoMasq.decryptJSON(derivedKey, encryptedJson).then(function (decryptedJson) {
-      console.log(CryptoMasq.arrayToAscii(decryptedJson))
-      // {"POI_1":"Tour eiffel","POI_2":"Cafeteria"}
+      console.log(decryptedJson) // { POI_1: "Tour eiffel", POI_2: "Cafeteria"}
     })
   })
 })
