@@ -1,7 +1,8 @@
 # Masq Crypto Library
 
-Promise-based crypto library for Qwant Masq. It allows applications encrypt and decrypt object. The cipher used is AES GCM which provides integrity and confidentiality. 
-The library includes a passphrase generator and the PBKDF2 algorithm. 
+Promise-based crypto library used by Qwant Masq. It allows applications to encrypt and decrypt JSON data. The cipher used is AES GCM which provides integrity and confidentiality.
+
+The library includes a passphrase generator and key derivation using the PBKDF2 algorithm. 
 
 # Install
 
@@ -10,6 +11,7 @@ The library includes a passphrase generator and the PBKDF2 algorithm.
 ```
 git clone https://github.com/QwantResearch/masq-crypto.git
 cd masq-crypto
+npm install
 ```
 
 # Example usage
