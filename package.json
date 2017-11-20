@@ -7,7 +7,7 @@
     "clean": "rm dist/index.js",
     "build": "./node_modules/.bin/babel ./src --experimental -d ./dist",
     "dist": "npm run build && browserify ./dist/index.js --standalone CryptoMasq > dist/bundle.js && npm run clean",
-    "start": "http-server ."
+    "start": "npm run dist && http-server ."
   },
   "author": {
     "name": "Levent Demir",
