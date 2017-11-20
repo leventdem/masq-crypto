@@ -12,7 +12,7 @@ export const deriveKey = (passPhrase = '', keyLenth = 18, iterations = 10000) =>
   // TODO: set this to a real value later
   let salt = new Uint8Array('')
 
-  return crypto.subtle.importKey('raw', asciiToArray(passPhrase), 'PBKDF2', false, ['deriveBits', 'deriveKey']).then(function (baseKey) {
+  return crypto.subtle.importKey('raw', toArray(passPhrase), 'PBKDF2', false, ['deriveBits', 'deriveKey']).then(function (baseKey) {
     return crypto.subtle.deriveBits({name: 'PBKDF2', salt: salt, iterations: iterations, hash: 'sha-256'}, baseKey, 128)
   }).then(function (derivedKey) {
     return new Uint8Array(derivedKey)
@@ -66,7 +66,7 @@ const decryptBuffer = (data, key, iv, mode, additionalData) => {
  */
 const encryptBuffer = (data, key, iv, mode, additionalData) => {
   return crypto.subtle.importKey('raw', key, {name: mode}, true, ['encrypt', 'decrypt']).then(function (bufKey) {
-    return crypto.subtle.encrypt({name: mode, iv, additionalData: additionalData}, bufKey, data).then(function (result) {
+    return crypto.subtle.encrypt({name: mode, iv, additionalData}, bufKey, data).then(function (result) {
       return new Uint8Array(result)
     })
   })
@@ -76,17 +76,18 @@ const encryptBuffer = (data, key, iv, mode, additionalData) => {
  * Encrypt an object
  *
  * @param {ArrayBuffer} key Encryption key
- * @param {object} data A string containing data (e.g. stringified JSON)
+ * @param {string} data A string containing data to be encrypted (e.g. a stringified JSON)
  * @param {string} additionalData The authenticated data (ex. version number :1.0.1 )
- * @returns {object} Return a  JSON object with the following format :
+ * @returns {object} Return a promise with a JSON object having the following format :
  *     { ciphertext : {hexString}, iv : {hexString}, version : {string} }
  */
 export const encrypt = (key, data, additionalData) => {
   // Prepare context
   const iv = window.crypto.getRandomValues(new Uint8Array(12))
+  const toEncrypt = toArray(data)
 
-  return encryptBuffer(data, key, iv, 'AES-GCM', asciiToArray(additionalData)).then(function (result) {
-    return {ciphertext: arrayToHexString(result), iv: arrayToHexString(iv), version: additionalData}
+  return encryptBuffer(toEncrypt, key, iv, 'AES-GCM', toArray(additionalData)).then(function (result) {
+    return {ciphertext: bufferToHexString(result), iv: bufferToHexString(iv), version: additionalData}
   })
 }
 
@@ -101,12 +102,12 @@ export const encrypt = (key, data, additionalData) => {
  */
 export const decrypt = (key, data) => {
   // Prepare context
-  const ciphertext = hexStringToArray(data.ciphertext)
-  const additionalData = asciiToArray(data.version)
-  const iv = hexStringToArray(data.iv)
+  const ciphertext = hexStringToBuffer(data.ciphertext)
+  const additionalData = toArray(data.version)
+  const iv = hexStringToBuffer(data.iv)
 
   return decryptBuffer(ciphertext, key, iv, 'AES-GCM', additionalData).then(function (decrypted) {
-    return arrayToAscii(decrypted)
+    return toString(decrypted)
   })
 }
 
@@ -128,7 +129,7 @@ export const getTag = (encrypted, tagLength = 128) => {
  * @param {String} hexString
  * @returns {ArrayBuffer}
  */
-export const hexStringToArray = (hexString) => {
+export const hexStringToBuffer = (hexString) => {
   if (hexString.length % 2 !== 0) {
     throw new Error('Invalid hexString')
   }
@@ -152,7 +153,7 @@ export const hexStringToArray = (hexString) => {
  * @param {ArrayBuffer} bytes
  * @returns {String}
  */
-export const arrayToHexString = (bytes) => {
+export const bufferToHexString = (bytes) => {
   if (!bytes) {
     return null
   }
@@ -176,7 +177,7 @@ export const arrayToHexString = (bytes) => {
  * @param {String} str
  * @returns {ArrayBuffer}
  */
-export const asciiToArray = (str = '') => {
+export const toArray = (str = '') => {
   let chars = []
   for (let i = 0; i < str.length; ++i) {
     chars.push(str.charCodeAt(i))
@@ -191,6 +192,6 @@ export const asciiToArray = (str = '') => {
  * @param {ArrayBuffer} bytes
  * @returns {String}
  */
-export const arrayToAscii = (bytes) => {
+export const toString = (bytes) => {
   return String.fromCharCode.apply(null, new Uint8Array(bytes))
 }

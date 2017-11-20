@@ -22,7 +22,7 @@ var deriveKey = exports.deriveKey = function deriveKey() {
   // TODO: set this to a real value later
   var salt = new Uint8Array('');
 
-  return crypto.subtle.importKey('raw', asciiToArray(passPhrase), 'PBKDF2', false, ['deriveBits', 'deriveKey']).then(function (baseKey) {
+  return crypto.subtle.importKey('raw', toArray(passPhrase), 'PBKDF2', false, ['deriveBits', 'deriveKey']).then(function (baseKey) {
     return crypto.subtle.deriveBits({ name: 'PBKDF2', salt: salt, iterations: iterations, hash: 'sha-256' }, baseKey, 128);
   }).then(function (derivedKey) {
     return new Uint8Array(derivedKey);
@@ -57,7 +57,7 @@ var randomString = exports.randomString = function randomString() {
  * @param {ArrayBuffer} additionalData The non-secret authenticated data
  * @returns {ArrayBuffer}
  */
-var decrypt = function decrypt(data, key, iv, mode, additionalData) {
+var decryptBuffer = function decryptBuffer(data, key, iv, mode, additionalData) {
   // TODO: test input params
   return crypto.subtle.importKey('raw', key, { name: mode }, true, ['encrypt', 'decrypt']).then(function (bufKey) {
     return crypto.subtle.decrypt({ name: mode, iv: iv, additionalData: additionalData }, bufKey, data).then(function (result) {
@@ -76,7 +76,7 @@ var decrypt = function decrypt(data, key, iv, mode, additionalData) {
  * @param {ArrayBuffer} additionalData The non-secret authenticated data
  * @returns {ArrayBuffer}
  */
-var encrypt = function encrypt(data, key, iv, mode, additionalData) {
+var encryptBuffer = function encryptBuffer(data, key, iv, mode, additionalData) {
   return crypto.subtle.importKey('raw', key, { name: mode }, true, ['encrypt', 'decrypt']).then(function (bufKey) {
     return crypto.subtle.encrypt({ name: mode, iv: iv, additionalData: additionalData }, bufKey, data).then(function (result) {
       return new Uint8Array(result);
@@ -88,18 +88,18 @@ var encrypt = function encrypt(data, key, iv, mode, additionalData) {
  * Encrypt an object
  *
  * @param {ArrayBuffer} key Encryption key
- * @param {object} data Basic key-pair values
+ * @param {string} data A string containing data to be encrypted (e.g. a stringified JSON)
  * @param {string} additionalData The authenticated data (ex. version number :1.0.1 )
- * @returns {object} Return a  JSON object with the following format :
+ * @returns {object} Return a promise with a JSON object having the following format :
  *     { ciphertext : {hexString}, iv : {hexString}, version : {string} }
  */
-var encryptJSON = exports.encryptJSON = function encryptJSON(key, data, additionalData) {
+var encrypt = exports.encrypt = function encrypt(key, data, additionalData) {
   // Prepare context
-  var dataJson = asciiToArray(JSON.stringify(data));
   var iv = window.crypto.getRandomValues(new Uint8Array(12));
+  var toEncrypt = toArray(data);
 
-  return encrypt(dataJson, key, iv, 'AES-GCM', asciiToArray(additionalData)).then(function (result) {
-    return { ciphertext: arrayToHexString(result), iv: arrayToHexString(iv), version: additionalData };
+  return encryptBuffer(toEncrypt, key, iv, 'AES-GCM', toArray(additionalData)).then(function (result) {
+    return { ciphertext: bufferToHexString(result), iv: bufferToHexString(iv), version: additionalData };
   });
 };
 
@@ -112,19 +112,14 @@ var encryptJSON = exports.encryptJSON = function encryptJSON(key, data, addition
  * @returns {string} Return the decrypted data as a string.
  *
  */
-var decryptJSON = exports.decryptJSON = function decryptJSON(key, data) {
+var decrypt = exports.decrypt = function decrypt(key, data) {
   // Prepare context
-  var ciphertext = hexStringToArray(data.ciphertext);
-  var additionalData = asciiToArray(data.version);
-  var iv = hexStringToArray(data.iv);
+  var ciphertext = hexStringToBuffer(data.ciphertext);
+  var additionalData = toArray(data.version);
+  var iv = hexStringToBuffer(data.iv);
 
-  return decrypt(ciphertext, key, iv, 'AES-GCM', additionalData).then(function (decrypted) {
-    try {
-      return JSON.parse(arrayToAscii(decrypted));
-    } catch (err) {
-      console.log(err);
-      return {};
-    }
+  return decryptBuffer(ciphertext, key, iv, 'AES-GCM', additionalData).then(function (decrypted) {
+    return toString(decrypted);
   });
 };
 
@@ -148,7 +143,7 @@ var getTag = exports.getTag = function getTag(encrypted) {
  * @param {String} hexString
  * @returns {ArrayBuffer}
  */
-var hexStringToArray = exports.hexStringToArray = function hexStringToArray(hexString) {
+var hexStringToBuffer = exports.hexStringToBuffer = function hexStringToBuffer(hexString) {
   if (hexString.length % 2 !== 0) {
     throw new Error('Invalid hexString');
   }
@@ -172,7 +167,7 @@ var hexStringToArray = exports.hexStringToArray = function hexStringToArray(hexS
  * @param {ArrayBuffer} bytes
  * @returns {String}
  */
-var arrayToHexString = exports.arrayToHexString = function arrayToHexString(bytes) {
+var bufferToHexString = exports.bufferToHexString = function bufferToHexString(bytes) {
   if (!bytes) {
     return null;
   }
@@ -196,7 +191,7 @@ var arrayToHexString = exports.arrayToHexString = function arrayToHexString(byte
  * @param {String} str
  * @returns {ArrayBuffer}
  */
-var asciiToArray = exports.asciiToArray = function asciiToArray() {
+var toArray = exports.toArray = function toArray() {
   var str = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
 
   var chars = [];
@@ -213,7 +208,7 @@ var asciiToArray = exports.asciiToArray = function asciiToArray() {
  * @param {ArrayBuffer} bytes
  * @returns {String}
  */
-var arrayToAscii = exports.arrayToAscii = function arrayToAscii(bytes) {
+var toString = exports.toString = function toString(bytes) {
   return String.fromCharCode.apply(null, new Uint8Array(bytes));
 };
 },{}]},{},[1])(1)
