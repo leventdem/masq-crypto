@@ -2,7 +2,7 @@
   "name": "masq-crypto",
   "version": "0.0.1",
   "description": "Crypto wrapper for Masq",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "clean": "rm dist/index.js",
     "prepublish": "make clean build",
