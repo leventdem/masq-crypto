@@ -4,7 +4,7 @@
  * @param {string} passPhrase The passphrase that is used to derive the key
  * @returns {Promise}   A promise that contains the derived key
  */
-export const deriveKey = (passPhrase = '', iterations = 10000) => {
+export const deriveKey = (passPhrase = '', keyLenth = 18, iterations = 10000) => {
   if (passPhrase.length === 0) {
     passPhrase = randomString(keyLenth)
   }
