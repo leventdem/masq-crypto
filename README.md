@@ -28,14 +28,14 @@ Using the crypto library in your app:
 const apiData = { POI_1: 'Tour eiffel', POI_2: 'Cafeteria'}
 
 // If no passphrase is given, it will be generated.
-CryptoMasq.deriveKey('').then(function (derivedKey) {
+deriveKey('').then(function (derivedKey) {
   // encryption
-  CryptoMasq.encryptJSON(derivedKey, apiData, '1.0.0').then(function (encryptedJson) {
+  encrypt(derivedKey, JSON.stringify(apiData), '1.0.0').then(function (encryptedJson) {
     console.log(encryptedJson)
     // Object { ciphertext: "cb9a804…", iv: "145a65b6535d00b5a3cce475", version: "1.0.0" }
 
     // decryption
-    CryptoMasq.decryptJSON(derivedKey, encryptedJson).then(function (decryptedJson) {
+    decrypt(derivedKey, encryptedJson).then(function (decryptedJson) {
       console.log(decryptedJson) // { POI_1: "Tour eiffel", POI_2: "Cafeteria"}
     })
   })
