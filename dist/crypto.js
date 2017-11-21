@@ -24,9 +24,9 @@ var deriveKey = exports.deriveKey = function deriveKey() {
 
   return crypto.subtle.importKey('raw', toArray(passPhrase), 'PBKDF2', false, ['deriveBits', 'deriveKey']).then(function (baseKey) {
     return crypto.subtle.deriveBits({ name: 'PBKDF2', salt: salt, iterations: iterations, hash: 'sha-256' }, baseKey, 128);
-  }).then(function (derivedKey) {
+  }, logFail).then(function (derivedKey) {
     return new Uint8Array(derivedKey);
-  });
+  }, logFail);
 };
 
 // Generate a random string using the Webwindow API instead of Math.random (insecure)
@@ -62,8 +62,8 @@ var decryptBuffer = function decryptBuffer(data, key, iv, mode, additionalData) 
   return crypto.subtle.importKey('raw', key, { name: mode }, true, ['encrypt', 'decrypt']).then(function (bufKey) {
     return crypto.subtle.decrypt({ name: mode, iv: iv, additionalData: additionalData }, bufKey, data).then(function (result) {
       return new Uint8Array(result);
-    });
-  });
+    }, logFail);
+  }, logFail);
 };
 
 /**
@@ -80,8 +80,8 @@ var encryptBuffer = function encryptBuffer(data, key, iv, mode, additionalData) 
   return crypto.subtle.importKey('raw', key, { name: mode }, true, ['encrypt', 'decrypt']).then(function (bufKey) {
     return crypto.subtle.encrypt({ name: mode, iv: iv, additionalData: additionalData }, bufKey, data).then(function (result) {
       return new Uint8Array(result);
-    });
-  });
+    }, logFail);
+  }, logFail);
 };
 
 /**
@@ -100,7 +100,7 @@ var encrypt = exports.encrypt = function encrypt(key, data, additionalData) {
 
   return encryptBuffer(toEncrypt, key, iv, 'AES-GCM', toArray(additionalData)).then(function (result) {
     return { ciphertext: bufferToHexString(result), iv: bufferToHexString(iv), version: additionalData };
-  });
+  }, logFail);
 };
 
 /**
@@ -120,7 +120,16 @@ var decrypt = exports.decrypt = function decrypt(key, data) {
 
   return decryptBuffer(ciphertext, key, iv, 'AES-GCM', additionalData).then(function (decrypted) {
     return toString(decrypted);
-  });
+  }, logFail);
+};
+
+/**
+ * Print error messages
+ *
+ * @param {Error} err Error message
+ */
+var logFail = function logFail(err) {
+  console.log(err);
 };
 
 /**
