@@ -21,6 +21,7 @@ Add the client JS reference in your page:
 ```JavaScript
 <script type="text/javascript" src="src/index.js"></script>
 ```
+
 Using the crypto library in your app:
 
 ```JavaScript
@@ -41,8 +42,10 @@ deriveKey('').then(function (derivedKey) {
   })
 })
 ```
+
 ## Utils functions 
-Useful functions to convert between ArrayBuffer - String and hexString, examples : 
+Useful functions to convert between ArrayBuffer - String and hexString, examples:
+
 ```JavaScript
 let testRes = ''
 if (toString(toArray('bonjour')) !== 'bonjour') { testRes = 'Fail' } else { testRes = 'Success' }
@@ -50,3 +53,7 @@ console.log('array <-> ascii conversion :' + testRes)
 if (bufferToHexString(hexStringToBuffer('11a1b2')) !== '11a1b2') { testRes = 'Fail' } else { testRes = 'Success' }
 console.log('array <-> hexString conversion : ' + testRes)
 ```
+
+## License
+
+Apache-2.0
