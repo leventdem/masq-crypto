@@ -102,7 +102,7 @@ const encryptBuffer = (data, key, iv, mode = "aes-gcm", additionalData) => {
  * @param {string} curve Chosen Elliptic curve ("P-256", "P-384", or "P-521")
  * @returns {Promise} EC key pair : public and private
  */
-const genECKeyPair = (curve = "P-256") => {
+export const genECKeyPair = (curve = "P-256") => {
   return crypto.subtle.generateKey({
     name: "ECDH",
     namedCurve: curve
@@ -117,7 +117,7 @@ const genECKeyPair = (curve = "P-256") => {
  * @param {int} modulusLength Chosen modulus length (1024, 2048 or 4096)
  * @returns {Promise} RSA key pair : public and private
  */
-const genRSAKeyPair = (modulusLength = 4096) => {
+export const genRSAKeyPair = (modulusLength = 4096) => {
   return crypto.subtle.generateKey({
     name: "RSA-PSS", modulusLength: modulusLength, //can be 1024, 2048, or 4096
     publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
@@ -137,7 +137,7 @@ const genRSAKeyPair = (modulusLength = 4096) => {
  * @param {arrayBuffer} signedData Signed data
  * @returns {arrayBuffer}  The signature
  */
-const verifRSA = (publicKey, signature, signedData) => {
+export const verifRSA = (publicKey, signature, signedData) => {
   return crypto.subtle.verify({
     name: "RSA-PSS",
     saltLength: 16
@@ -151,7 +151,7 @@ const verifRSA = (publicKey, signature, signedData) => {
  * @param {arrayBuffer} data Data to be signed
  * @returns {arrayBuffer} The signature
  */
-const signRSA = (privateKey, data) => {
+export const signRSA = (privateKey, data) => {
   return crypto.subtle.sign({
     name: "RSA-PSS",
     saltLength: 16
@@ -166,7 +166,7 @@ const signRSA = (privateKey, data) => {
  * @param {CryptoKey} key The key that we extract raw value
  * @returns {arrayBuffer} The raw key
  */
-const exportKeyRaw = (key) => {
+export const exportKeyRaw = (key) => {
   return crypto.subtle.exportKey("raw", key).then(function(signature) {
     return new Uint8Array(signature)
   }, logFail)
@@ -181,7 +181,7 @@ const exportKeyRaw = (key) => {
  * @param {int} keySize Key size of the derived key in bits (128, 192, 256)
  * @returns {arrayBuffer} The derived key
  */
-const deriveKeyECDH = (publicKey, privateKey, type, keySize) => {
+export const deriveKeyECDH = (publicKey, privateKey, type, keySize) => {
   return crypto.subtle.deriveKey({
     name: "ECDH",
     public: publicKey
