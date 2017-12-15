@@ -16,13 +16,13 @@ npm install
 
 # Example usage
 
-##Add the client JS reference in your page:
+## Add the client JS reference in your page:
 
 ```JavaScript
 <script type="text/javascript" src="src/index.js"></script>
 ```
 
-##Using the crypto library in your app:
+## Using the crypto library in your app:
 
 ```JavaScript
 // EXAMPLE
@@ -42,7 +42,7 @@ deriveKey('').then(function (derivedKey) {
   })
 })
 ```
-##ECDHE example :
+## ECDHE example :
 In order to provide Perfect Forward Secrecy, we implement ECDHE.
 We follow this pattern for now : ECDHE-RSA-AES128-GCM-SHA256
 Where :
