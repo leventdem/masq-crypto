@@ -1,260 +1,24 @@
-/**
- * Generate a PBKDF2 derived key based on user given passPhrase
- *
- * @param {string} passPhrase The passphrase that is used to derive the key
- * @returns {Promise}   A promise that contains the derived key
- */
-export const deriveKey = (passPhrase = '', keyLenth = 18, iterations = 10000) => {
-  if (passPhrase.length === 0) {
-    passPhrase = randomString(keyLenth)
-  }
+import * as cryp from './crypto'
+var localforage = require('localforage');
 
-  // TODO: set this to a real value later
-  let salt = new Uint8Array('')
+var ecKeys = {}
 
-  return crypto.subtle.importKey(
-    'raw',
-    toArray(passPhrase),
-    'PBKDF2',
-    false,
-    ['deriveBits', 'deriveKey']
-  ).then(function(baseKey) {
-    return crypto.subtle.deriveBits({
-      name: 'PBKDF2',
-      salt: salt,
-      iterations: iterations,
-      hash: 'sha-256'
-    }, baseKey, 128)
-  }, logFail).then(function(derivedKey) {
-    return new Uint8Array(derivedKey)
-  }, logFail)
+const signPubKey = {}
+
+const rawEcKeys = {}
+
+var MK = null
+
+const apiData = {
+  POI_1: 'Tour eiffel',
+  POI_2: 'Bastille',
+  POI_3: 'Cafeteria'
 }
 
-// Generate a random string using the Webwindow API instead of Math.random
-// (insecure)
-export const randomString = (length = 18) => {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let result = ''
-  if (window.crypto && window.crypto.getRandomValues) {
-    const values = new Uint32Array(length)
-    window.crypto.getRandomValues(values)
-    for (let i = 0; i < length; i++) {
-      result += charset[values[i] % charset.length]
-    }
-  } else {
-    console.log("Your browser can't generate secure random numbers")
-  }
-  return result
-}
-
-/**
- * Decrypt data with AES-GCM cipher
- *
- * @param {ArrayBuffer} data Data to decrypt
- * @param {ArrayBuffer} key Aes key as raw data. 128 or 256 bits
- * @param {ArrayBuffer} iv The IV with a size of 96 bits (12 bytes)
- * @param {string} mode The encryption mode : AES-GCM
- * @param {ArrayBuffer} additionalData The non-secret authenticated data
- * @returns {ArrayBuffer}
- */
-const decryptBuffer = (data, key, iv, mode, additionalData) => {
-  // TODO: test input params
-  return crypto.subtle.importKey('raw', key, {
-    name: mode
-  }, true, ['encrypt', 'decrypt']).then(function(bufKey) {
-    return crypto.subtle.decrypt({
-      name: mode,
-      iv,
-      additionalData: additionalData
-    }, bufKey, data).then(function(result) {
-      return new Uint8Array(result)
-    }, logFail)
-  }, logFail)
-}
-
-/**
- * Encrypt data with AES-GCM cipher
- *
- * @param {ArrayBuffer} data Data to encrypt
- * @param {ArrayBuffer} key Aes key as raw data. 128 or 256 bits
- * @param {ArrayBuffer} iv The IV with a size of 96 bits (12 bytes)
- * @param {string} mode The encryption mode : AES-GCM
- * @param {ArrayBuffer} additionalData The non-secret authenticated data
- * @returns {ArrayBuffer}
- */
-const encryptBuffer = (data, key, iv, mode = "aes-gcm", additionalData) => {
-  return crypto.subtle.importKey('raw', key, {
-    name: mode
-  }, true, ['encrypt', 'decrypt']).then(function(bufKey) {
-    return crypto.subtle.encrypt({
-      name: mode,
-      iv,
-      additionalData
-    }, bufKey, data).then(function(result) {
-      return new Uint8Array(result)
-    }, logFail)
-  }, logFail)
-}
-
-/**
- * Generate an EC key pair
- *
- * @param {string} curve Chosen Elliptic curve ("P-256", "P-384", or "P-521")
- * @returns {Promise} EC key pair : public and private
- */
-export const genECKeyPair = (curve = "P-256") => {
-  return crypto.subtle.generateKey({
-    name: "ECDH",
-    namedCurve: curve
-  }, false, ["deriveKey", "deriveBits"]).then(function(key) {
-    return key
-  }, logFail)
-}
-
-/**
- * Generate a RSA-PSS key pair for signature and verification
- *
- * @param {int} modulusLength Chosen modulus length (1024, 2048 or 4096)
- * @returns {Promise} RSA key pair : public and private
- */
-export const genRSAKeyPair = (modulusLength = 4096) => {
-  return crypto.subtle.generateKey({
-    name: "RSA-PSS", modulusLength: modulusLength, //can be 1024, 2048, or 4096
-    publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-    hash: {
-      name: "SHA-256"
-    }
-  }, false, ["sign", "verify"]).then(function(key) {
-    return key
-  }, logFail)
-}
-
-/**
- * Verif data (e.g. raw EC public key in case of ECDH)
- *
- * @param {object} publicKey Public Key used to verify data signature
- * @param {arrayBuffer} signature The signature based on data
- * @param {arrayBuffer} signedData Signed data
- * @returns {arrayBuffer}  The signature
- */
-export const verifRSA = (publicKey, signature, signedData) => {
-  return crypto.subtle.verify({
-    name: "RSA-PSS",
-    saltLength: 16
-  }, publicKey, signature, signedData)
-}
-
-/**
- * Sign data (e.g. raw EC public key in case of ECDH)
- *
- * @param {CryptoKey} privateKey Private Key used to sign data
- * @param {arrayBuffer} data Data to be signed
- * @returns {arrayBuffer} The signature
- */
-export const signRSA = (privateKey, data) => {
-  return crypto.subtle.sign({
-    name: "RSA-PSS",
-    saltLength: 16
-  }, privateKey, data).then(function(signature) {
-    return new Uint8Array(signature)
-  }, logFail)
-}
-
-/**
- * Export raw key
- *
- * @param {CryptoKey} key The key that we extract raw value
- * @returns {arrayBuffer} The raw key
- */
-export const exportKeyRaw = (key) => {
-  return crypto.subtle.exportKey("raw", key).then(function(signature) {
-    return new Uint8Array(signature)
-  }, logFail)
-}
-
-/**
- * Derive  key (AES-GCM by default) during ECDH key exchange
- *
- * @param {object} publicKey Public Key of the sender (verified)
- * @param {object} privateKey Private Key of the receiver
- * @param {string} type Key type of the derived key (aes-cbc, aes-ctr)
- * @param {int} keySize Key size of the derived key in bits (128, 192, 256)
- * @returns {arrayBuffer} The derived key
- */
-export const deriveKeyECDH = (publicKey, privateKey, type, keySize) => {
-  return crypto.subtle.deriveKey({
-    name: "ECDH",
-    public: publicKey
-  }, privateKey, {
-    name: type,
-    length: keySize
-  }, true, ['decrypt', 'encrypt']).then(function(derivedKey) {
-    console.log("Shared AES secret key is computed.");
-    return crypto.subtle.exportKey("raw", derivedKey)
-  }, logFail).then(function(rawKey) {
-    return new Uint8Array(rawKey)
-  }, logFail)
-}
-
-/**
- * Generate an AES key
- *
- * @param {string} type Key type of the generated key (aes-cbc, aes-ctr)
- * @param {int} keySize Key size of the generated key in bits (128, 192, 256)
- * @returns {object} aesKey : a key object
- */
-export const genAESKey = (type = "aes-cbc", keySize = 128) => {
-  return crypto.subtle.generateKey({
-    name: type,
-    length: keySize
-  }, true, ['decrypt', 'encrypt']).then(function(aesKey) {
-    return aesKey
-  }, logFail)
-}
-
-/**
- * Encrypt an object
- *
- * @param {ArrayBuffer} key Encryption key
- * @param {string} data A string containing data to be encrypted (e.g. a stringified JSON)
- * @param {string} additionalData The authenticated data (ex. version number :1.0.1 )
- * @returns {object} Return a promise with a JSON object having the following format :
- *     { ciphertext : {hexString}, iv : {hexString}, version : {string} }
- */
-export const encrypt = (key, data, additionalData) => {
-  // Prepare context
-  const iv = window.crypto.getRandomValues(new Uint8Array(12))
-  const toEncrypt = toArray(data)
-
-  return encryptBuffer(toEncrypt, key, iv, 'AES-GCM', toArray(additionalData)).then(
-    function(result) {
-      return {ciphertext: bufferToHexString(result), iv: bufferToHexString(iv), version: additionalData}
-    },
-    logFail
-  )
-}
-
-/**
- * Decrypt an object
- *
- * @param {ArrayBuffer} key Decryption key
- * @param {object} encrypted data Must contain 3 values:
- *     { ciphertext : {hexString}, iv : {hexString}, version : {string}
- * @returns {string} Return the decrypted data as a string.
- *
- */
-export const decrypt = (key, data) => {
-  // Prepare context
-  const ciphertext = hexStringToBuffer(data.ciphertext)
-  const additionalData = toArray(data.version)
-  const iv = hexStringToBuffer(data.iv)
-
-  return decryptBuffer(ciphertext, key, iv, 'AES-GCM', additionalData).then(
-    function(decrypted) {
-      return toString(decrypted)
-    },
-    logFail
-  )
+var rsaKeys = {
+  public: null,
+  private: null,
+  rawPubKey: null
 }
 
 /**
@@ -266,87 +30,411 @@ const logFail = (err) => {
   console.log(err)
 }
 
-/**
- * Gets tag from encrypted data
- *
- * @param {ArrayBuffer} encrypted Encrypted data
- * @param {number} tagLength Tag length in bits. Default 128 bits
- * @returns {ArrayBuffer}
- */
-export const getTag = (encrypted, tagLength = 128) => {
-  return encrypted.slice(encrypted.byteLength - ((tagLength + 7) >> 3))
+var DB = {
+  configure: function() {
+    localforage.config({
+      driver: localforage.INDEXEDDB, // Force WebSQL; same as using setDriver()
+      name: 'MasqStore',
+      version: 1.0,
+      storeName: 'myStore', // Should be alphanumeric, with underscores.
+      description: 'Store info'
+    });
+    console.log(
+      'localforage configured with default driver:',
+      localforage.driver()
+    );
+  }
+};
+
+DB.configure()
+
+let parameters = {
+  syncserver: "ws://10.100.50.17:8080/",
+  syncroom: "cryyyyptoooo",
+  debug: true
+}
+let wsClient
+let clientId = 'alice'
+
+export const sendMessage = (msg) => {
+  if (wsClient.readyState === wsClient.OPEN) {
+    wsClient.send(JSON.stringify(msg))
+  } else {
+    console.log("Socket closed !");
+  }
 }
 
-/**
- * Convert hex String to ArrayBufffer
- * ex : '11a1b2' -> Uint8Array [ 17, 161, 178 ]
- *
- * @param {String} hexString
- * @returns {ArrayBuffer}
- */
-export const hexStringToBuffer = (hexString) => {
-  if (hexString.length % 2 !== 0) {
-    throw new Error('Invalid hexString')
-  }
-  const arrayBuffer = new Uint8Array(hexString.length / 2)
+const delay = (ms) => {
+  console.log("wait ...")
+  return new Promise(function(resolve, reject) {
+    setTimeout(resolve, ms); // (A)
+  })
+}
 
-  for (let i = 0; i < hexString.length; i += 2) {
-    const byteValue = parseInt(hexString.substr(i, 2), 16)
-    if (isNaN(byteValue)) {
-      throw new Error('Invalid hexString')
+function initWSClient(server, room) {
+  return new Promise((resolve, reject) => {
+    room = room || 'foo'
+    // const wsUrl = url.resolve(server, room)
+    const wsUrl = (window.URL !== undefined)
+      ? new window.URL(room, server)
+      : server + room
+
+    const ws = new window.WebSocket(wsUrl)
+
+    ws.onopen = () => {
+      // throttle openning new sockets
+      if (window.timerID) {
+        window.clearInterval(window.timerID)
+        delete window.timerID
+      }
+      console.log(`Connected to Sync server at ${wsUrl}`)
+      // TODO: check if we need to sync with other devices
+      return resolve(ws)
     }
-    arrayBuffer[i / 2] = byteValue
-  }
 
-  return arrayBuffer
-}
-
-/**
- * Convert ArrayBufffer to hex String
- * ex : Uint8Array [ 17, 161, 178 ] -> '11a1b2'
- *
- * @param {ArrayBuffer} bytes
- * @returns {String}
- */
-export const bufferToHexString = (bytes) => {
-  if (!bytes) {
-    return null
-  }
-  let hexBytes = []
-
-  for (let i = 0; i < bytes.length; ++i) {
-    let byteString = bytes[i].toString(16)
-    if (byteString.length < 2) {
-      byteString = '0' + byteString
+    ws.onerror = (event) => {
+      const err = `Could not connect to Sync server at ${wsUrl}`
+      // console.log(err)
+      return reject(err)
     }
-    hexBytes.push(byteString)
-  }
-
-  return hexBytes.join('')
+  })
 }
 
 /**
- * Convert ascii to ArrayBufffer
- * ex : "bonjour" -> Uint8Array [ 98, 111, 110, 106, 111, 117, 114 ]
+ * Initialize the WebSocket client. This allows us to synchronize with the
+ * other devices for the user.
  *
- * @param {String} str
- * @returns {ArrayBuffer}
+ * The current implementation unfortunately mutates the wsClient variable.
  */
-export const toArray = (str = '') => {
-  let chars = []
-  for (let i = 0; i < str.length; ++i) {
-    chars.push(str.charCodeAt(i))
+
+const initWs = (params) => {
+  if (wsClient && wsClient.readyState === wsClient.OPEN) {
+    return
   }
-  return new Uint8Array(chars)
+  if (!params) {
+    params = parameters
+  }
+  console.log('Initializing WebSocket with params:', params)
+  initWSClient(params.syncserver, params.syncroom).then((ws) => {
+    wsClient = ws
+
+    wsClient.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data)
+        switch (msg.type) {
+          case 'hello':
+            console.log("onMessage :", msg.type)
+            helloMessageReceived(msg.name)
+            break
+          case 'requestRSAPub':
+            console.log("onMessage :", msg.type)
+            let data = {
+              type: "sendRSAPub",
+              name: clientId,
+              publicKeyRSA: rsaKeys.rawPubKey
+            }
+            sendMessage(data)
+            break
+          case 'sendRSAPub':
+            console.log("onMessage :", msg.type)
+            console.log("I receive a RSA pub key of ", msg.name);
+            console.log(msg.publicKeyRSA);
+            storeRSAPub(msg.name, msg.publicKeyRSA)
+            break
+          case 'readyToTransfer':
+            console.log("onMessage :", msg.type)
+            console.log(
+              msg.name,
+              "is ready to transfer files. I will check the received EC public Key"
+            );
+            verifSignSendData(
+              msg.name,
+              cryp.hexStringToBuffer(msg.key),
+              cryp.hexStringToBuffer(msg.signature)
+            )
+            break
+          case 'readyToTransfer_2':
+            console.log("onMessage :", msg.type)
+            console.log(msg.name, "is ready to transfer files. Decrypt data");
+            decryptData(msg.name, msg.data)
+            break
+          case 'startECDH':
+            console.log("onMessage :", msg.type)
+            console.log("I receive the EC pub key + sign of ", msg.name);
+            console.log(msg.key);
+            checkReceivedECPubKey(
+              msg.name,
+              cryp.hexStringToBuffer(msg.key),
+              cryp.hexStringToBuffer(msg.signature)
+            )
+            break
+          default:
+            console.log("onMessage :", msg.type)
+            break
+        }
+      } catch (err) {
+        console.log(err)
+      }
+    }
+
+    wsClient.onclose = (event) => {
+      console.log(`WebSocket connection closed`)
+      // Try to reconnect if the connection was closed
+      if (event.wasClean === false || event.code === 1006) {
+        console.log(`..trying to reconnect`)
+        if (!window.timerID) {
+          window.timerID = setInterval(() => {
+            initWs(parameters)
+          }, wsTimeout)
+        }
+      }
+    }
+  }).catch((err) => {
+    log(err)
+  })
 }
 
-/**
- * Convert ArrayBufffer to ascii
- * ex : Uint8Array [ 98, 111, 110, 106, 111, 117, 114 ] -> "bonjour"
- *
- * @param {ArrayBuffer} bytes
- * @returns {String}
- */
-export const toString = (bytes) => {
-  return String.fromCharCode.apply(null, new Uint8Array(bytes))
+const validateUser = () => {
+  clientId = document.getElementById('username').value
+  console.log(clientId)
+  localforage.setItem("clientId", clientId).then(res => {
+    //console.log('Using:' + localforage.driver());
+    console.log('###Change username  into IndexedDB with key "clientId"###');
+  }, logFail)
 }
+
+const helloMessageSend = () => {
+  console.log('send hello message');
+  sendMessage({type: "hello", name: clientId})
+}
+
+const helloMessageReceived = (name) => {
+  localforage.getItem("connectedDevices").then(devices => {
+    if (devices === null || !(name in devices)) {
+      let data = {
+        type: "requestRSAPub",
+        name: clientId
+      }
+      sendMessage(data)
+    } else {
+      console.log("I already have the RSA public key of ", name)
+    }
+  }, logFail)
+}
+
+const storeRSAPub = (name, key) => {
+  var listDevices = {}
+  localforage.getItem("connectedDevices").then(devices => {
+    if (devices === null) {
+      listDevices[name] = key
+    } else {
+      listDevices = devices
+      listDevices[name] = key
+    }
+    localforage.setItem('connectedDevices', listDevices).then(res => {
+      console.log("Public key stored")
+    }, logFail)
+  }, logFail)
+}
+
+const decryptData = (name, encryptedData) => {
+  cryp.decrypt(MK, encryptedData).then(decryptedJson => {
+    console.log(decryptedJson) // { POI_1: "Tour eiffel", POI_2: "Cafeteria"}
+  }, logFail)
+}
+
+const verifSignSendData = (name, receivedKey, signature) => {
+
+  //Retrieve the RSA public key of name
+  localforage.getItem("connectedDevices").then(devices => {
+    if (devices === null || !(name in devices)) {
+      console.log("I could not find the RSA public Key of ", name)
+      return
+    }
+    cryp.importRSAPubKeyRaw(devices[name]).then(senderRSAPublicKey => {
+      console.log("received EC public Key before verification");
+      console.log(senderRSAPublicKey, signature, receivedKey);
+      cryp.verifRSA(senderRSAPublicKey, signature, receivedKey).then(result => {
+        if (result) {
+          // if verification is ok, import received EC public key as CryptoKey
+          cryp.importKeyRaw(receivedKey).then(receivedECPublicKey => {
+            console.log("verification ok")
+            // Bob : with Alice Public key and his EC private key, we derive a symmetric key
+            // Suppose the EC public keys exhange and signature verification is ok Let's
+            // derive the same symmetric key
+            cryp.deriveKeyECDH(receivedECPublicKey, ecKeys.privateKey, "aes-gcm", 128).then(
+              aesKey => {
+                MK = aesKey
+                cryp.encrypt(aesKey, JSON.stringify(apiData), '1.0.0').then(encryptedJson => {
+                  //console.log(encryptedJson)
+                  let data = {
+                    name: clientId,
+                    type: "readyToTransfer_2",
+                    data: encryptedJson
+                  }
+                  sendMessage(data)
+                }, logFail)
+              },
+              logFail
+            )
+          }, logFail)
+        } else {
+          console.log("verification fails")
+        }
+      }, logFail)
+    }, logFail)
+  }, logFail)
+}
+
+const checkReceivedECPubKey = (name, receivedKey, signature) => {
+  console.log('I generate my own EC keys');
+  cryp.genECKeyPair().then(ECkeys => {
+    ecKeys = ECkeys
+    //Retrieve the RSA public key of name
+    localforage.getItem("connectedDevices").then(devices => {
+      if (devices === null || !(name in devices)) {
+        console.log("I could not find the RSA public Key of ", name)
+        return
+      }
+      cryp.importRSAPubKeyRaw(devices[name]).then(senderRSAPublicKey => {
+        // console.log("received EC public Key before verification");
+        // console.log(senderRSAPublicKey, signature, receivedKey);
+        cryp.verifRSA(senderRSAPublicKey, signature, receivedKey).then(result => {
+          if (result) {
+            // if verification is ok, import received EC public key as CryptoKey
+            cryp.importKeyRaw(receivedKey).then(receivedECPublicKey => {
+              console.log("verification ok")
+              // Bob : with Alice Public key and his EC private key, we derive a symmetric key
+              // Suppose the EC public keys exhange and signature verification is ok Let's
+              // derive the same symmetric key
+              cryp.deriveKeyECDH(receivedECPublicKey, ecKeys.privateKey, "aes-gcm", 128).then(
+                aesKey => {
+                  MK = aesKey
+                  cryp.exportKeyRaw(ecKeys.publicKey).then(clientECPublicKey => {
+                    cryp.signRSA(rsaKeys.private, clientECPublicKey).then(signatureToSend => {
+
+                      let data = {
+                        name: clientId,
+                        type: "readyToTransfer",
+                        key: cryp.bufferToHexString(clientECPublicKey),
+                        signature: cryp.bufferToHexString(signatureToSend)
+                      }
+                      sendMessage(data)
+                    }, logFail)
+                  }, logFail)
+                },
+                logFail
+              )
+            }, logFail)
+          } else {
+            console.log("verification fails")
+          }
+        }, logFail)
+      }, logFail)
+    }, logFail)
+  }, logFail)
+}
+
+const startECDH = () => {
+  console.log('I initiate a ECDH to share info.');
+  console.log('I generate EC keys');
+  cryp.genECKeyPair().then(key => {
+    ecKeys = key
+    cryp.exportKeyRaw(key.publicKey).then(rawKey => {
+      cryp.signRSA(rsaKeys.private, rawKey).then(signature => {
+        // test purpose console.log(rsaKeys.public, signature, rawKey);
+        // cryp.verifRSA(rsaKeys.public, signature, rawKey).then(result => {   if
+        // (result) {     console.log("spefic test is succesful")   } }, logFail)
+        let data = {
+          name: clientId,
+          type: "startECDH",
+          key: cryp.bufferToHexString(rawKey),
+          signature: cryp.bufferToHexString(signature)
+        }
+        sendMessage(data)
+      }, logFail)
+    }, logFail)
+  }, logFail)
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var el = document.getElementById('validateUserName');
+  if (el) {
+    el.addEventListener('click', function(e) {
+      validateUser();
+    });
+  };
+
+  el = document.getElementById('exchange_RSA_pub_keys');
+  if (el) {
+    el.addEventListener('click', function(e) {
+      helloMessageSend();
+    });
+  };
+
+  el = document.getElementById('start_ecdh');
+  if (el) {
+    el.addEventListener('click', function(e) {
+      startECDH();
+    });
+  };
+
+});
+
+const checkRSA = () => {
+  return localforage.getItem('myRSA_Keys').then(key => {
+    if (key === null) {
+      return cryp.genRSAKeyPair().then(key => {
+        console.log(key);
+        rsaKeys.public = key.publicKey
+        rsaKeys.private = key.privateKey
+
+        console.log("export rawkey")
+        return cryp.exportRSAPubKeyRaw(key.publicKey).then(rawKey => {
+          console.log(rawKey)
+          rsaKeys.rawPubKey = rawKey
+          return localforage.setItem("myRSA_Keys", rsaKeys).then(res => {
+            //console.log('Using:' + localforage.driver());
+            console.log('###RSA key  into IndexedDB with key "myRSA_Keys"###');
+            return "First, time RSA keys have been generated"
+          }, logFail)
+        }, logFail)
+      }, logFail)
+    } else {
+      // console.log(key);
+      rsaKeys = key
+      console.log(rsaKeys);
+      return "RSA keys retrieved from localstorage"
+    }
+
+  }, logFail)
+
+}
+
+const checkClientId = () => {
+  localforage.getItem('clientId').then(client => {
+    if (client !== '') {
+      clientId = client
+    }
+    var el = document.getElementById('username')
+    if (el)
+      el.value = clientId
+  }, logFail)
+}
+
+const init = () => {
+  checkClientId()
+  checkRSA().then((res) => {
+    document.getElementById('rsaKey' + clientId).innerHTML = 'RSA keys loaded !'
+    console.log(res)
+  })
+}
+
+initWs()
+init()
+
+// delay(2500).then(() => {   console.log("send message")
+//
+//   sendMessage({type: "check"})
+//
+// })
