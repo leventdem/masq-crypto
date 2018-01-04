@@ -4,7 +4,7 @@
   "description": "Crypto wrapper for Masq",
   "main": "src/index.js",
   "scripts": {
-    "clean": "rm  dist/crypto.js dist/index.js dist/AES.js dist/utils.js",
+    "clean": "rm  dist/crypto.js dist/index.js dist/AES.js dist/utils.js dist/EC.js",
     "build": "./node_modules/.bin/babel ./src --experimental -d ./dist && browserify ./dist/index.js --standalone CryptoMasq > dist/cryptoMasq.js && npm run clean",
     "minify": "npm run build && uglifyjs ./dist/cryptoMasq.js -o ./dist/cryptoMasq.min.js --compress --mangle -- ",
     "dist": "npm run minify",

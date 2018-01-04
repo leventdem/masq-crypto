@@ -1,6 +1,8 @@
 import * as cryp from './crypto'
 import localforage from 'localforage'
 import AES from './AES'
+import EC from './EC'
+import RSA from './RSA'
 import utils from './utils'
 
 
@@ -540,35 +542,43 @@ const init = () => {
 // initWs()
 // init()
 
-// We generate a 128 bits key with crypto random
-const AESKey = window.crypto.getRandomValues(new Uint8Array(16))
-// We create an AES object with some paramters
-const myAES = new AES(
-  {
-    mode: 'aes-gcm',
-    key: AESKey,
-    keySize: 128
-  }
-)
-// optionnal : we add additionalData:"1.0.0"
-myAES.setAdditionalData('1.0.0')
+// // We generate a 128 bits key with crypto random
+// const AESKey = window.crypto.getRandomValues(new Uint8Array(16))
+// // We create an AES object with some paramters
+// const myAES = new AES(
+//   {
+//     mode: 'aes-gcm',
+//     key: AESKey,
+//     keySize: 128
+//   }
+// )
+// // optionnal : we add additionalData:"1.0.0"
+// myAES.setAdditionalData('1.0.0')
 
-myAES.encrypt(JSON.stringify(apiData))
-  .then(encryptedJSON => {
-    console.log(encryptedJSON)
-    return myAES.decrypt(encryptedJSON)
+// myAES.encrypt(JSON.stringify(apiData))
+//   .then(encryptedJSON => {
+//     console.log(encryptedJSON)
+//     return myAES.decrypt(encryptedJSON)
+//   })
+//   .then(decryptedJSON => console.log(decryptedJSON))
+//   .catch(err => console.log(err))
+
+// // Generate an AES key
+// const aes = new AES(
+//   {
+//     mode: 'aes-gcm',
+//     keySize: 128
+//   }
+// )
+// aes.genAESKey()
+//   .then(console.log)
+//   .catch(err => console.log(err))
+const myEC = new EC({})
+console.log(myEC)
+
+myEC.genECKeyPair()
+  .then(res => {
+    console.log(res)
+    console.log(myEC)
   })
-  .then(decryptedJSON => console.log(decryptedJSON))
-  .catch(err => console.log(err))
-
-// Generate an AES key
-const aes = new AES(
-  {
-    mode: 'aes-gcm',
-    keySize: 128
-  }
-)
-aes.genAESKey()
-  .then(console.log)
-  .catch(err => console.log(err))
-
+  .catch(logFail)
