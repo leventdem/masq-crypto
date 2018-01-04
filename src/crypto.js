@@ -1,3 +1,7 @@
+
+
+
+
 /**
  * Generate a PBKDF2 derived key based on user given passPhrase
  *
@@ -18,14 +22,14 @@ export const deriveKey = (passPhrase = '', keyLenth = 18, iterations = 10000) =>
     'PBKDF2',
     false,
     ['deriveBits', 'deriveKey']
-  ).then(function(baseKey) {
+  ).then(function (baseKey) {
     return crypto.subtle.deriveBits({
       name: 'PBKDF2',
       salt: salt,
       iterations: iterations,
       hash: 'sha-256'
     }, baseKey, 128)
-  }, logFail).then(function(derivedKey) {
+  }, logFail).then(function (derivedKey) {
     return new Uint8Array(derivedKey)
   }, logFail)
 }
@@ -61,12 +65,12 @@ const decryptBuffer = (data, key, iv, mode, additionalData) => {
   // TODO: test input params
   return crypto.subtle.importKey('raw', key, {
     name: mode
-  }, true, ['encrypt', 'decrypt']).then(function(bufKey) {
+  }, true, ['encrypt', 'decrypt']).then(function (bufKey) {
     return crypto.subtle.decrypt({
       name: mode,
       iv,
       additionalData: additionalData
-    }, bufKey, data).then(function(result) {
+    }, bufKey, data).then(function (result) {
       return new Uint8Array(result)
     }, logFail)
   }, logFail)
@@ -82,15 +86,15 @@ const decryptBuffer = (data, key, iv, mode, additionalData) => {
  * @param {ArrayBuffer} additionalData The non-secret authenticated data
  * @returns {ArrayBuffer}
  */
-const encryptBuffer = (data, key, iv, mode = "aes-gcm", additionalData) => {
+const encryptBuffer = (data, key, iv, mode = 'aes-gcm', additionalData) => {
   return crypto.subtle.importKey('raw', key, {
     name: mode
-  }, true, ['encrypt', 'decrypt']).then(function(bufKey) {
+  }, true, ['encrypt', 'decrypt']).then(function (bufKey) {
     return crypto.subtle.encrypt({
       name: mode,
       iv,
       additionalData
-    }, bufKey, data).then(function(result) {
+    }, bufKey, data).then(function (result) {
       return new Uint8Array(result)
     }, logFail)
   }, logFail)
@@ -102,11 +106,11 @@ const encryptBuffer = (data, key, iv, mode = "aes-gcm", additionalData) => {
  * @param {string} curve Chosen Elliptic curve ("P-256", "P-384", or "P-521")
  * @returns {Promise} EC key pair : public and private
  */
-export const genECKeyPair = (curve = "P-256") => {
+export const genECKeyPair = (curve = 'P-256') => {
   return crypto.subtle.generateKey({
-    name: "ECDH",
+    name: 'ECDH',
     namedCurve: curve
-  }, false, ["deriveKey", "deriveBits"]).then(function(key) {
+  }, false, ['deriveKey', 'deriveBits']).then(function (key) {
     return key
   }, logFail)
 }
@@ -119,12 +123,13 @@ export const genECKeyPair = (curve = "P-256") => {
  */
 export const genRSAKeyPair = (modulusLength = 4096) => {
   return crypto.subtle.generateKey({
-    name: "RSA-PSS", modulusLength: modulusLength, //can be 1024, 2048, or 4096
+    name: 'RSA-PSS',
+    modulusLength: modulusLength, // can be 1024, 2048, or 4096
     publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
     hash: {
-      name: "SHA-256"
+      name: 'SHA-256'
     }
-  }, false, ["sign", "verify"]).then(function(key) {
+  }, false, ['sign', 'verify']).then(function (key) {
     return key
   }, logFail)
 }
@@ -139,7 +144,7 @@ export const genRSAKeyPair = (modulusLength = 4096) => {
  */
 export const verifRSA = (publicKey, signature, signedData) => {
   return crypto.subtle.verify({
-    name: "RSA-PSS",
+    name: 'RSA-PSS',
     saltLength: 16
   }, publicKey, signature, signedData)
 }
@@ -153,9 +158,9 @@ export const verifRSA = (publicKey, signature, signedData) => {
  */
 export const signRSA = (privateKey, data) => {
   return crypto.subtle.sign({
-    name: "RSA-PSS",
+    name: 'RSA-PSS',
     saltLength: 16
-  }, privateKey, data).then(function(signature) {
+  }, privateKey, data).then(function (signature) {
     return new Uint8Array(signature)
   }, logFail)
 }
@@ -163,22 +168,22 @@ export const signRSA = (privateKey, data) => {
 /**
  * Import RSA-PSS public key
  *
- * @param {jwk} key The key that we want to import
+ * @param {jwk} key The key (jwk format) that we want to import
  * @returns {arrayBuffer} The raw key
  */
 export const importRSAPubKeyRaw = (key) => {
-  return crypto.subtle.importKey("jwk", {
+  return crypto.subtle.importKey('jwk', {
     kty: key.kty,
     e: key.e,
     n: key.n,
     alg: key.alg,
     ext: key.ext
   }, {
-    name: "RSA-PSS",
+    name: 'RSA-PSS',
     hash: {
-      name: "SHA-256"
+      name: 'SHA-256'
     }
-  }, false, ["verify"]).then(key => {
+  }, false, ['verify']).then(key => {
     return (key)
   }, logFail)
 }
@@ -190,7 +195,7 @@ export const importRSAPubKeyRaw = (key) => {
  * @returns {arrayBuffer} The raw key
  */
 export const exportRSAPubKeyRaw = (key) => {
-  return crypto.subtle.exportKey("jwk", key).then(function(keydata) {
+  return crypto.subtle.exportKey('jwk', key).then(function (keydata) {
     return (keydata)
   }, logFail)
 }
@@ -202,7 +207,7 @@ export const exportRSAPubKeyRaw = (key) => {
  * @returns {arrayBuffer} The raw key
  */
 export const exportKeyRaw = (key) => {
-  return crypto.subtle.exportKey("raw", key).then(rawKey => {
+  return crypto.subtle.exportKey('raw', key).then(rawKey => {
     return new Uint8Array(rawKey)
   }, logFail)
 }
@@ -213,9 +218,9 @@ export const exportKeyRaw = (key) => {
  * @returns {CryptoKey} The CryptoKey
  */
 export const importKeyRaw = (key) => {
-  return crypto.subtle.importKey("raw", key, {
-    name: "ECDH",
-    namedCurve: "P-256"
+  return crypto.subtle.importKey('raw', key, {
+    name: 'ECDH',
+    namedCurve: 'P-256'
   }, true, []).then(res => {
     return res
   }, logFail)
@@ -232,15 +237,14 @@ export const importKeyRaw = (key) => {
  */
 export const deriveKeyECDH = (publicKey, privateKey, type, keySize) => {
   return crypto.subtle.deriveKey({
-    name: "ECDH",
+    name: 'ECDH',
     public: publicKey
   }, privateKey, {
     name: type,
     length: keySize
-  }, true, ['decrypt', 'encrypt']).then(function(derivedKey) {
-    console.log("Shared AES secret key is computed.");
-    return crypto.subtle.exportKey("raw", derivedKey)
-  }, logFail).then(function(rawKey) {
+  }, true, ['decrypt', 'encrypt']).then(function (derivedKey) {
+    return crypto.subtle.exportKey('raw', derivedKey)
+  }, logFail).then(function (rawKey) {
     return new Uint8Array(rawKey)
   }, logFail)
 }
@@ -252,11 +256,11 @@ export const deriveKeyECDH = (publicKey, privateKey, type, keySize) => {
  * @param {int} keySize Key size of the generated key in bits (128, 192, 256)
  * @returns {object} aesKey : a key object
  */
-export const genAESKey = (type = "aes-cbc", keySize = 128) => {
+export const genAESKey = (type = 'aes-cbc', keySize = 128) => {
   return crypto.subtle.generateKey({
     name: type,
     length: keySize
-  }, true, ['decrypt', 'encrypt']).then(function(aesKey) {
+  }, true, ['decrypt', 'encrypt']).then(function (aesKey) {
     return aesKey
   }, logFail)
 }
@@ -276,7 +280,7 @@ export const encrypt = (key, data, additionalData) => {
   const toEncrypt = toArray(data)
 
   return encryptBuffer(toEncrypt, key, iv, 'AES-GCM', toArray(additionalData)).then(
-    function(result) {
+    function (result) {
       return {ciphertext: bufferToHexString(result), iv: bufferToHexString(iv), version: additionalData}
     },
     logFail
@@ -299,7 +303,7 @@ export const decrypt = (key, data) => {
   const iv = hexStringToBuffer(data.iv)
 
   return decryptBuffer(ciphertext, key, iv, 'AES-GCM', additionalData).then(
-    function(decrypted) {
+    function (decrypted) {
       return toString(decrypted)
     },
     logFail

@@ -1,12 +1,8 @@
 import * as cryp from './crypto'
-var localforage = require('localforage');
+import localforage from 'localforage'
+import AES from './AES'
 
 var ecKeys = {}
-
-const signPubKey = {}
-
-const rawEcKeys = {}
-
 var MK = null
 
 const apiData = {
@@ -21,6 +17,27 @@ var rsaKeys = {
   rawPubKey: null
 }
 
+const parameters = {
+  syncserver: 'ws://10.100.50.17:8080/',
+  // syncserver: 'https://sync-beta.qwantresearch.com/',
+  syncroom: 'cryyyyptoooo',
+  debug: true
+}
+let wsClient
+let wsTimeout = 10000
+let clientId = ''
+
+var log = (...args) => {
+  const reg = (all, cur) => {
+    if (typeof (cur) === 'string') {
+      return all + cur
+    }
+  }
+  if (parameters.debug) {
+    console.log('[Masq Crypto]', args.reduce(reg, ''))
+  }
+}
+
 /**
  * Print error messages
  *
@@ -31,47 +48,37 @@ const logFail = (err) => {
 }
 
 var DB = {
-  configure: function() {
+  configure: function () {
     localforage.config({
-      driver: localforage.INDEXEDDB, // Force WebSQL; same as using setDriver()
+      driver: localforage.INDEXEDDB, // Force WebSQL same as using setDriver()
       name: 'MasqStore',
       version: 1.0,
       storeName: 'myStore', // Should be alphanumeric, with underscores.
       description: 'Store info'
-    });
-    console.log(
-      'localforage configured with default driver:',
-      localforage.driver()
-    );
+    })
+    // log(   'localforage configured with default driver:',
+    // localforage.driver() )
   }
-};
+}
 
 DB.configure()
-
-let parameters = {
-  syncserver: "ws://10.100.50.17:8080/",
-  syncroom: "cryyyyptoooo",
-  debug: true
-}
-let wsClient
-let clientId = ''
 
 export const sendMessage = (msg) => {
   if (wsClient.readyState === wsClient.OPEN) {
     wsClient.send(JSON.stringify(msg))
   } else {
-    console.log("Socket closed !");
+    log('Socket closed !')
   }
 }
 
 const delay = (ms) => {
-  console.log("wait ...")
-  return new Promise(function(resolve, reject) {
-    setTimeout(resolve, ms); // (A)
+  log('wait ...')
+  return new Promise(function (resolve, reject) {
+    setTimeout(resolve, ms) // (A)
   })
 }
 
-function initWSClient(server, room) {
+const initWSClient = (server, room) => {
   return new Promise((resolve, reject) => {
     room = room || 'foo'
     // const wsUrl = url.resolve(server, room)
@@ -87,14 +94,14 @@ function initWSClient(server, room) {
         window.clearInterval(window.timerID)
         delete window.timerID
       }
-      console.log(`Connected to Sync server at ${wsUrl}`)
+      log(`Connected to Sync server at ${wsUrl}`)
       // TODO: check if we need to sync with other devices
       return resolve(ws)
     }
 
     ws.onerror = (event) => {
       const err = `Could not connect to Sync server at ${wsUrl}`
-      // console.log(err)
+      // log(err)
       return reject(err)
     }
   })
@@ -114,7 +121,7 @@ const initWs = (params) => {
   if (!params) {
     params = parameters
   }
-  console.log('Initializing WebSocket with params:', params)
+  log('Initializing WebSocket with params:', params)
   initWSClient(params.syncserver, params.syncroom).then((ws) => {
     wsClient = ws
 
@@ -123,51 +130,48 @@ const initWs = (params) => {
         const msg = JSON.parse(event.data)
         switch (msg.type) {
           case 'hello':
-            console.log("onMessage :", msg.type)
+            log('*** onMessage :', msg.type, ' ***')
             receiveHello(msg.name)
             break
           case 'hello_ack':
-            console.log("onMessage :", msg.type)
+            log('*** onMessage :', msg.type, ' ***')
             receiveHello_ack(msg.name)
             break
           case 'requestRSAPub':
-            console.log("onMessage :", msg.type)
+            log('*** onMessage :', msg.type, ' ***')
             receiveRequestRSAPub(msg.name)
-
             break
           case 'requestRSAPub_ack':
-            console.log("onMessage :", msg.type)
+            log('*** onMessage :', msg.type, ' ***')
             receiveRequestRSAPub_ack(msg)
-
-            break
-          case 'startECDH_ack':
-            console.log("onMessage :", msg.type)
-            receiveStartECDH_ack(msg)
-
-            break
-          case 'readyToTransfer_2':
-            console.log("onMessage :", msg.type)
-            console.log(msg.name, "is ready to transfer files. Decrypt data");
-            decryptData(msg.name, msg.data)
             break
           case 'startECDH':
-            console.log("onMessage :", msg.type)
+            log('*** onMessage :', msg.type, ' ***')
             receiveStartECDH(msg)
             break
+          case 'startECDH_ack':
+            log('*** onMessage :', msg.type, ' ***')
+            receiveStartECDH_ack(msg)
+            break
+          case 'data':
+            log('*** onMessage :', msg.type, ' ***')
+            receiveData(msg)
+            break
+
           default:
-            console.log("onMessage :", msg)
+            log('onMessage :', msg)
             break
         }
       } catch (err) {
-        console.log(err)
+        log(err)
       }
     }
 
     wsClient.onclose = (event) => {
-      console.log(`WebSocket connection closed`)
+      log(`WebSocket connection closed`)
       // Try to reconnect if the connection was closed
       if (event.wasClean === false || event.code === 1006) {
-        console.log(`..trying to reconnect`)
+        log(`..trying to reconnect`)
         if (!window.timerID) {
           window.timerID = setInterval(() => {
             initWs(parameters)
@@ -180,12 +184,204 @@ const initWs = (params) => {
   })
 }
 
-const checkReceivedECPubKey = (name, receivedKey, signature) => {
-  //Retrieve the RSA public key of name
-  return localforage.getItem("connectedDevices").then(devices => {
+const sendHello = () => {
+  log('send hello message')
+  sendMessage({ type: 'hello', name: clientId })
+}
+
+const receiveHello = (name) => {
+  // First we response to hello msg, the sender could this way check if he altough
+  // has RSA public key
+  sendHello_ack()
+  checkRSAPub(name).then(res => {
+    if (res) {
+      log('I already have the RSA public key of ', name)
+    } else {
+      sendRequestRSAPub()
+    }
+  })
+}
+
+const sendHello_ack = () => {
+  // log('Response to hello message with hello_ack')
+  sendMessage({ type: 'hello_ack', name: clientId })
+}
+
+const receiveHello_ack = (name) => {
+  checkRSAPub(name).then(res => {
+    if (res) {
+      log('I already have the RSA public key of ', name)
+      log('***Now, both entities have exchanged their RSA public keys***')
+    } else {
+      sendRequestRSAPub()
+    }
+
+  })
+}
+
+const sendRequestRSAPub = () => {
+  log('Response to hello message with hello_ack')
+  let data = {
+    type: 'requestRSAPub',
+    name: clientId
+  }
+  sendMessage(data)
+}
+
+const receiveRequestRSAPub = (name) => {
+  log(name, ' asks my RSA public Key')
+  sendRequestRSAPub_ack(name)
+}
+
+const sendRequestRSAPub_ack = (name) => {
+  log('I send my RSA Public key to ', name)
+  let data = {
+    type: 'requestRSAPub_ack',
+    name: clientId,
+    publicKeyRSA: rsaKeys.rawPubKey
+  }
+  sendMessage(data)
+}
+
+const receiveRequestRSAPub_ack = (msg) => {
+  log(
+    '*** ',
+    clientId,
+    ' : RSA pub key of ',
+    msg.name,
+    ' is received ***'
+  )
+  // log(msg.publicKeyRSA)
+  log('***Now, both entities have exchanged their RSA public keys***')
+  storeRSAPub(msg.name, msg.publicKeyRSA)
+}
+
+const sendStartECDH = (ECPublicKey, signature) => {
+  let data = {
+    name: clientId,
+    type: 'startECDH',
+    key: ECPublicKey,
+    signature: signature
+  }
+  sendMessage(data)
+}
+
+const receiveStartECDH = (msg) => {
+  log(
+    '*** ',
+    clientId,
+    ' : Just received the EC pub key of ',
+    msg.name,
+    '  ***'
+  )
+  checkReceivedECPubKey(
+    msg.name,
+    cryp.hexStringToBuffer(msg.key),
+    cryp.hexStringToBuffer(msg.signature)
+  ).then(res => {
+    if (res) {
+      log('*** ', clientId, ' : EC public key verification of ', msg.name, ' : OK ***')
+      generateECKeysAndSign().then(res => {
+        sendStartECDH_ack(res.rawECPublicKey, res.signature)
+        log('*** ', clientId, ' : computed the one time shared AES secret key. ***')
+        deriveMK(cryp.hexStringToBuffer(msg.key)).then((aesKey) => {
+          MK = aesKey
+        }, logFail)
+      }, logFail)
+    } else {
+      log('EC public key verification fails')
+      // TODO : send error message : the public key verification failes :
+      // TODO -  MITM :-(
+      // TODO - have you changed yout Public RSA key ) sendRequestRSAPub()
+    }
+  })
+}
+
+const sendStartECDH_ack = (ECPublicKey, signature) => {
+  let data = {
+    name: clientId,
+    type: 'startECDH_ack',
+    key: ECPublicKey,
+    signature: signature
+  }
+  sendMessage(data)
+}
+
+const receiveStartECDH_ack = (msg) => {
+  log('*** ', msg.name, ' is ready to transfer files. ***')
+
+  checkReceivedECPubKey(
+    msg.name,
+    cryp.hexStringToBuffer(msg.key),
+    cryp.hexStringToBuffer(msg.signature)
+  ).then(res => {
+    if (res) {
+      log('*** ', clientId, ' : EC public key verification of ', msg.name, ' : OK ***')
+      log(
+        '*** Now, both entities have exchanged and verified their EC public keys***'
+      )
+      log('*** ', clientId, ' : computed the one time shared AES secret key. ***')
+      deriveMK(cryp.hexStringToBuffer(msg.key)).then((MK) => {
+        log('*** ', clientId, ' : encrypts a message and sends it. ***')
+        encryptData(MK, 'dataForFuture')
+      })
+    } else {
+      log('EC public key verification fails')
+      // TODO : send error message : the public key verification fails :
+      // TODO -  MITM :-(
+      // TODO - have you changed your Public RSA key => sendRequestRSAPub()
+    }
+  })
+}
+
+const sendData = (encryptedData) => {
+  let data = {
+    name: clientId,
+    type: 'data',
+    data: encryptedData
+  }
+  sendMessage(data)
+}
+
+const receiveData = (msg) => {
+  log('*** ', msg.name, ' sends me data. Let us decrypt it')
+  decryptData(msg.name, msg.data)
+}
+
+const deriveMK = (ECPublicKey) => {
+  return cryp.importKeyRaw(ECPublicKey).then(receivedECPublicKey => {
+    return cryp.deriveKeyECDH(
+      receivedECPublicKey,
+      ecKeys.privateKey,
+      'aes-gcm',
+      128
+    )
+  }, logFail)
+}
+
+const encryptData = (aesKey, dataToEncrypt) => {
+  cryp.encrypt(aesKey, JSON.stringify(apiData), '1.0.0').then(encryptedJson => {
+    // log(encryptedJson)
+    sendData(encryptedJson)
+  }, logFail)
+}
+
+const checkRSAPub = (name) => {
+  return localforage.getItem('connectedDevices').then(devices => {
     if (devices === null || !(name in devices)) {
-      console.log("I could not find the RSA public Key of ", name)
-      //TODO : call the RSA public key exchange messsage or procedure
+      return false
+    } else {
+      return true
+    }
+  }, logFail)
+}
+
+const checkReceivedECPubKey = (name, receivedKey, signature) => {
+  // Retrieve the RSA public key of name
+  return localforage.getItem('connectedDevices').then(devices => {
+    if (devices === null || !(name in devices)) {
+      log('I could not find the RSA public Key of ', name)
+      // TODO : call the RSA public key exchange messsage or procedure
       return
     }
     return cryp.importRSAPubKeyRaw(devices[name]).then(senderRSAPublicKey => {
@@ -203,189 +399,9 @@ const checkReceivedECPubKey = (name, receivedKey, signature) => {
   }, logFail)
 }
 
-const validateUser = () => {
-  clientId = document.getElementById('username').value
-  console.log(clientId)
-  localforage.setItem("clientId", clientId).then(res => {
-    //console.log('Using:' + localforage.driver());
-    console.log('###Change username  into IndexedDB with key "clientId"###');
-  }, logFail)
-}
-
-const sendHello = () => {
-  console.log('send hello message');
-  sendMessage({type: "hello", name: clientId})
-}
-
-const receiveHello = (name) => {
-  // First we response to hello msg, the sender could this way check if he altough
-  // has RSA public key
-  sendHello_ack()
-  checkRSAPub(name).then(res => {
-    if (res) {
-      console.log("I already have the RSA public key of ", name)
-    } else {
-      sendRequestRSAPub()
-    }
-  })
-}
-
-const sendHello_ack = () => {
-  console.log('Response to hello message with hello_ack');
-  sendMessage({type: "hello_ack", name: clientId})
-}
-
-const receiveHello_ack = (name) => {
-  checkRSAPub(name).then(res => {
-    if (res) {
-      console.log("I already have the RSA public key of ", name)
-    } else {
-      sendRequestRSAPub()
-    }
-  })
-}
-
-const sendRequestRSAPub = () => {
-  console.log('Response to hello message with hello_ack');
-  let data = {
-    type: "requestRSAPub",
-    name: clientId
-  }
-  sendMessage(data)
-}
-
-const receiveRequestRSAPub = (name) => {
-  console.log(name, "asks my RSA public Key");
-  sendRequestRSAPub_ack(name)
-}
-
-const sendRequestRSAPub_ack = (name) => {
-  console.log("I send my RSA Public key to ", name);
-  let data = {
-    type: "requestRSAPub_ack",
-    name: clientId,
-    publicKeyRSA: rsaKeys.rawPubKey
-  }
-  sendMessage(data)
-}
-
-const receiveRequestRSAPub_ack = (msg) => {
-  console.log("I receive a RSA pub key of ", msg.name);
-  console.log(msg.publicKeyRSA);
-  storeRSAPub(msg.name, msg.publicKeyRSA)
-}
-
-const sendStartECDH = (ECPublicKey, signature) => {
-  let data = {
-    name: clientId,
-    type: "startECDH",
-    key: ECPublicKey,
-    signature: signature
-  }
-  sendMessage(data)
-}
-
-const receiveStartECDH = (msg) => {
-  console.log("I receive the EC pub key + sign of ", msg.name);
-  console.log(msg.key);
-  checkReceivedECPubKey(
-    msg.name,
-    cryp.hexStringToBuffer(msg.key),
-    cryp.hexStringToBuffer(msg.signature)
-  ).then(res => {
-    if (res) {
-      console.log("EC public key of ", msg.name, " is verified.")
-      generateECKeysAndSign().then(res => {
-
-        sendStartECDH_ack(res.rawECPublicKey, res.signature)
-        deriveMK(cryp.hexStringToBuffer(msg.key)).then((aesKey) => {
-          MK = aesKey
-        }, logFail)
-      }, logFail)
-    } else {
-      console.log("EC public key verification fails")
-      //TODO : send error message : the public key verification failes :
-      //TODO -  MITM :-(
-      //TODO - have you changed yout Public RSA key ) sendRequestRSAPub()
-    }
-
-  })
-}
-
-const sendStartECDH_ack = (ECPublicKey, signature) => {
-  let data = {
-    name: clientId,
-    type: "startECDH_ack",
-    key: ECPublicKey,
-    signature: signature
-  }
-  sendMessage(data)
-}
-
-const receiveStartECDH_ack = (msg) => {
-  console.log(
-    msg.name,
-    "is ready to transfer files., ",
-    clientId,
-    " will check the received EC public Key"
-  );
-
-  checkReceivedECPubKey(
-    msg.name,
-    cryp.hexStringToBuffer(msg.key),
-    cryp.hexStringToBuffer(msg.signature)
-  ).then(res => {
-    if (res) {
-      console.log(" BIS : EC public key of ", msg.name, " is verified.")
-      deriveMK(cryp.hexStringToBuffer(msg.key)).then((MK) => {
-        encryptData(MK, "dataForFuture")
-      })
-    } else {
-      console.log("EC public key verification fails")
-      //TODO : send error message : the public key verification failes :
-      //TODO -  MITM :-(
-      //TODO - have you changed yout Public RSA key ) sendRequestRSAPub()
-    }
-  })
-}
-
-const deriveMK = (ECPublicKey) => {
-  return cryp.importKeyRaw(ECPublicKey).then(receivedECPublicKey => {
-    return cryp.deriveKeyECDH(
-      receivedECPublicKey,
-      ecKeys.privateKey,
-      "aes-gcm",
-      128
-    )
-  }, logFail)
-}
-
-const encryptData = (aesKey, dataToEncrypt) => {
-  console.log("encryptData");
-  cryp.encrypt(aesKey, JSON.stringify(apiData), '1.0.0').then(encryptedJson => {
-    //console.log(encryptedJson)
-    let data = {
-      name: clientId,
-      type: "readyToTransfer_2",
-      data: encryptedJson
-    }
-    sendMessage(data)
-  }, logFail)
-}
-
-const checkRSAPub = (name) => {
-  return localforage.getItem("connectedDevices").then(devices => {
-    if (devices === null || !(name in devices)) {
-      return false
-    } else {
-      return true
-    }
-  }, logFail)
-}
-
 const storeRSAPub = (name, key) => {
   var listDevices = {}
-  localforage.getItem("connectedDevices").then(devices => {
+  localforage.getItem('connectedDevices').then(devices => {
     if (devices === null) {
       listDevices[name] = key
     } else {
@@ -393,84 +409,14 @@ const storeRSAPub = (name, key) => {
       listDevices[name] = key
     }
     localforage.setItem('connectedDevices', listDevices).then(res => {
-      console.log("Public key stored")
+      log('Public key stored')
     }, logFail)
   }, logFail)
 }
 
 const decryptData = (name, encryptedData) => {
-  console.log("decryptData");
   cryp.decrypt(MK, encryptedData).then(decryptedJson => {
-    console.log(decryptedJson) // { POI_1: "Tour eiffel", POI_2: "Cafeteria"}
-  }, logFail)
-}
-
-const verifSignSendData = (name, receivedKey, signature) => {
-
-  //Retrieve the RSA public key of name
-  localforage.getItem("connectedDevices").then(devices => {
-    if (devices === null || !(name in devices)) {
-      console.log("I could not find the RSA public Key of ", name)
-      return
-    }
-    cryp.importRSAPubKeyRaw(devices[name]).then(senderRSAPublicKey => {
-      console.log("received EC public Key before verification");
-      console.log(senderRSAPublicKey, signature, receivedKey);
-      cryp.verifRSA(senderRSAPublicKey, signature, receivedKey).then(result => {
-        if (result) {
-          // if verification is ok, import received EC public key as CryptoKey
-          cryp.importKeyRaw(receivedKey).then(receivedECPublicKey => {
-            console.log("verification ok")
-            // Bob : with Alice Public key and his EC private key, we derive a symmetric key
-            // Suppose the EC public keys exhange and signature verification is ok Let's
-            // derive the same symmetric key
-            cryp.deriveKeyECDH(receivedECPublicKey, ecKeys.privateKey, "aes-gcm", 128).then(
-              aesKey => {
-                MK = aesKey
-                cryp.encrypt(aesKey, JSON.stringify(apiData), '1.0.0').then(encryptedJson => {
-                  //console.log(encryptedJson)
-                  let data = {
-                    name: clientId,
-                    type: "readyToTransfer_2",
-                    data: encryptedJson
-                  }
-                  sendMessage(data)
-                }, logFail)
-              },
-              logFail
-            )
-          }, logFail)
-        } else {
-          console.log("verification fails")
-        }
-      }, logFail)
-    }, logFail)
-  }, logFail)
-}
-
-const checkReceivedECPubKey2 = (name, receivedKey, signature) => {
-  console.log('I generate my own EC keys');
-  cryp.genECKeyPair().then(ECkeys => {
-    ecKeys = ECkeys
-    //Retrieve the RSA public key of name
-    localforage.getItem("connectedDevices").then(devices => {
-      if (devices === null || !(name in devices)) {
-        console.log("I could not find the RSA public Key of ", name)
-        return
-      }
-      cryp.importRSAPubKeyRaw(devices[name]).then(senderRSAPublicKey => {
-        // console.log("received EC public Key before verification");
-        // console.log(senderRSAPublicKey, signature, receivedKey);
-        cryp.verifRSA(senderRSAPublicKey, signature, receivedKey).then(result => {
-          if (result) {
-            // if verification is ok, import received EC public key as CryptoKey
-
-          } else {
-            console.log("verification fails")
-          }
-        }, logFail)
-      }, logFail)
-    }, logFail)
+    log(decryptedJson) // { POI_1: 'Tour eiffel', POI_2: 'Cafeteria'}
   }, logFail)
 }
 
@@ -481,9 +427,9 @@ const generateECKeysAndSign = () => {
     ecKeys = key
     return cryp.exportKeyRaw(key.publicKey).then(rawKey => {
       return cryp.signRSA(rsaKeys.private, rawKey).then(signature => {
-        // test purpose console.log(rsaKeys.public, signature, rawKey);
+        // test purpose log(rsaKeys.public, signature, rawKey)
         // cryp.verifRSA(rsaKeys.public, signature, rawKey).then(result => {   if
-        // (result) {     console.log("spefic test is succesful")   } }, logFail)
+        // (result) {     log('spefic test is succesful')   } }, logFail)
         return (
           // We convert to hexString because when the receiver parse the message, hte
           // obtained value are not Uint8array but Object which triggers an error with web
@@ -493,75 +439,82 @@ const generateECKeysAndSign = () => {
             signature: cryp.bufferToHexString(signature)
           }
         )
-
       }, logFail)
     }, logFail)
   }, logFail)
-
 }
 
+/*
+ * User interface :
+ * Event and button : only for demo purpose
+ */
+
+document.addEventListener('DOMContentLoaded', function () {
+  var el = document.getElementById('validateUserName')
+  if (el) {
+    el.addEventListener('click', function (e) {
+      validateUser()
+    })
+  }
+
+  el = document.getElementById('exchange_RSA_pub_keys')
+  if (el) {
+    el.addEventListener('click', function (e) {
+      sendHello()
+    })
+  }
+
+  el = document.getElementById('start_ecdh')
+  if (el) {
+    el.addEventListener('click', function (e) {
+      startECDH()
+    })
+  }
+})
+
 const startECDH = () => {
-  console.log('I initiate a ECDH to share encrypted info.');
-  console.log('I generate EC keys');
+  log(clientId, ' generates EC keys.')
   generateECKeysAndSign().then(res => {
     sendStartECDH(res.rawECPublicKey, res.signature)
   })
-
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  var el = document.getElementById('validateUserName');
-  if (el) {
-    el.addEventListener('click', function(e) {
-      validateUser();
-    });
-  };
-
-  el = document.getElementById('exchange_RSA_pub_keys');
-  if (el) {
-    el.addEventListener('click', function(e) {
-      sendHello();
-    });
-  };
-
-  el = document.getElementById('start_ecdh');
-  if (el) {
-    el.addEventListener('click', function(e) {
-      startECDH();
-    });
-  };
-
-});
+const validateUser = () => {
+  clientId = document.getElementById('username').value
+  log(clientId)
+  localforage.setItem('clientId', clientId).then(res => {
+    // log('Using:' + localforage.driver())
+    log('###Change username  into IndexedDB with key ', clientId, '###')
+  }, logFail)
+}
 
 const checkRSA = () => {
   return localforage.getItem('myRSA_Keys').then(key => {
     if (key === null) {
-      console.log("No RSA keys at all, let's generate them for", clientId);
+      log("No RSA keys at all, let's generate them for", clientId)
       return cryp.genRSAKeyPair().then(key => {
-        console.log(key);
+        log(key)
         rsaKeys.public = key.publicKey
         rsaKeys.private = key.privateKey
 
-        console.log("export rawkey")
+        log('export rawkey')
         return cryp.exportRSAPubKeyRaw(key.publicKey).then(rawKey => {
-          console.log(rawKey)
+          log(rawKey)
           rsaKeys.rawPubKey = rawKey
-          return localforage.setItem("myRSA_Keys", rsaKeys).then(res => {
-            //console.log('Using:' + localforage.driver());
-            console.log('###Store RSA keys into IndexedDB with key "myRSA_Keys"###');
-            return "First, time RSA keys have been generated"
+          return localforage.setItem('myRSA_Keys', rsaKeys).then(res => {
+            // log('Using:' + localforage.driver())
+            log('### Store RSA keys into IndexedDB with key myRSA_Keys ###')
+            return 'First, time RSA keys have been generated'
           }, logFail)
         }, logFail)
       }, logFail)
     } else {
-      // console.log(key);
+      // log(key)
       rsaKeys = key
-      console.log(rsaKeys);
-      return "RSA keys retrieved from IndexedDB"
+      log(rsaKeys)
+      return 'RSA keys retrieved from IndexedDB'
     }
-
   }, logFail)
-
 }
 
 const checkClientId = () => {
@@ -570,8 +523,7 @@ const checkClientId = () => {
       clientId = client
     }
     var el = document.getElementById('username')
-    if (el)
-      el.value = clientId
+    if (el) { el.value = clientId }
   }, logFail)
 }
 
@@ -579,15 +531,53 @@ const init = () => {
   checkClientId()
   checkRSA().then((res) => {
     document.getElementById('rsaKey' + clientId).innerHTML = 'RSA keys loaded !'
-    console.log(res)
+    log(res)
   })
 }
 
-initWs()
-init()
+// initWs()
+// init()
+const cipher = {
+  ciphertext: '185d4d778bc3760399b1b211c08b7218dc95dff9167b7ffeb7b7fb7d582b85cfa07552d24f6e467d3f147a9dfa138fa7bd2a5a1122745874b24afb554b8500fcf962e6457dab1f6358836825d542',
+  iv: '0889883eb20a716c7d106c31',
+  version: ''
+}
+let res = null
+cryp.deriveKey('bonjour').then(function (derivedKey) {
+  const myAES = new AES(
+    {
+      mode: 'aes-gcm',
+      key: derivedKey,
+      keySize: 128
+    }
+  )
+  console.log(myAES)
+  // additionalData:"1.0.0"
+  // myAES.setAdditionalData('1.0.0')
+  console.log('ready to encrypt')
+  myAES.encrypt(JSON.stringify(apiData)).then(encrypted => {
+    console.log(encrypted)
+    myAES.decrypt(encrypted).then(decrypted => {
+      console.log(decrypted)
+    })
+  })
+})
 
-// delay(2500).then(() => {   console.log("send message")
-//
-//   sendMessage({type: "check"})
-//
+//myAES.delay(1000).then(console.log)
+
+// console.log(res);
+// myAES.setMode('caesar')
+// res = myAES.encrypt("MAISON")
+// console.log("ciphertext",res);
+// res = myAES.decrypt(res)
+// console.log("plaintext",res);
+
+
+// // If no passphrase is given, it will be generated.
+// cryp.deriveKey('').then(function (derivedKey) {
+//   // encryption
+//   cryp.encrypt(derivedKey, JSON.stringify(apiData), '1.0.0').then(function (encryptedJson) {
+//     console.log(encryptedJson)
+//     // Object { ciphertext: "cb9a804…", iv: "145a65b6535d00b5a3cce475", version: "1.0.0" }
+//   })
 // })
