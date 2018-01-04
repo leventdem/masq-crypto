@@ -5,7 +5,7 @@
  * @param {String} str
  * @returns {ArrayBuffer}
  */
-export const toArray2 = (str = '') => {
+export const toArray = (str = '') => {
   let chars = []
   for (let i = 0; i < str.length; ++i) {
     chars.push(str.charCodeAt(i))
@@ -20,7 +20,7 @@ export const toArray2 = (str = '') => {
 * @param {ArrayBuffer} bytes
 * @returns {String}
 */
-export const bufferToHexString2 = (bytes) => {
+export const bufferToHexString = (bytes) => {
   if (!bytes) {
     return null
   }
@@ -44,7 +44,7 @@ export const bufferToHexString2 = (bytes) => {
  * @param {ArrayBuffer} bytes
  * @returns {String}
  */
-export const toString2 = (bytes) => {
+export const toString = (bytes) => {
   return String.fromCharCode.apply(null, new Uint8Array(bytes))
 }
 
@@ -55,7 +55,7 @@ export const toString2 = (bytes) => {
  * @param {String} hexString
  * @returns {ArrayBuffer}
  */
-export const hexStringToBuffer2 = (hexString) => {
+export const hexStringToBuffer = (hexString) => {
   if (hexString.length % 2 !== 0) {
     throw new Error('Invalid hexString')
   }
@@ -72,4 +72,4 @@ export const hexStringToBuffer2 = (hexString) => {
   return arrayBuffer
 }
 
-module.exports = { toArray2, bufferToHexString2, toString2, hexStringToBuffer2 }
+module.exports = { toArray, bufferToHexString, toString, hexStringToBuffer }

@@ -90,14 +90,14 @@ AES.prototype.setAdditionalData = function (additionalData) {
 AES.prototype.decrypt = function (input) {
   // Prepare context, all modes have at least 2 properties : iv and ciphertext
   let context = {}
-  context.iv = input.hasOwnProperty('iv') ? utils.hexStringToBuffer2(input.iv) : ''
-  context.ciphertext = input.hasOwnProperty('ciphertext') ? utils.hexStringToBuffer2(input.ciphertext) : ''
+  context.iv = input.hasOwnProperty('iv') ? utils.hexStringToBuffer(input.iv) : ''
+  context.ciphertext = input.hasOwnProperty('ciphertext') ? utils.hexStringToBuffer(input.ciphertext) : ''
   if (this.mode === 'aes-gcm') {
     // aes-gcm may have an additional authenticated data property (optional)
-    context.additionalData = input.hasOwnProperty('version') ? utils.toArray2(input.version) : []
+    context.additionalData = input.hasOwnProperty('version') ? utils.toArray(input.version) : []
 
     return decryptBuffer(context.ciphertext, this.key, context.iv, this.mode, context.additionalData)
-      .then(res => utils.toString2(res))
+      .then(res => utils.toString(res))
       .catch(logFail)
   } else {
     console.log(`The mode ${this.mode} is not yet supported`)
@@ -107,18 +107,18 @@ AES.prototype.decrypt = function (input) {
 AES.prototype.encrypt = function (input) {
   // all modes have at least the plaintext
   let context = {}
-  context.plaintext = utils.toArray2(input)
+  context.plaintext = utils.toArray(input)
   if (this.mode === 'aes-gcm') {
     // IV is 96 bits long === 12 bytes
     context.iv = this.iv || window.crypto.getRandomValues(new Uint8Array(12))
-    context.additionalData = utils.toArray2(this.additionalData)
+    context.additionalData = utils.toArray(this.additionalData)
 
     return encryptBuffer(context.plaintext, this.key, context.iv, this.mode, context.additionalData)
       .then(result => {
         return {
-          ciphertext: utils.bufferToHexString2(result),
-          iv: utils.bufferToHexString2(context.iv),
-          version: utils.toString2(context.additionalData)
+          ciphertext: utils.bufferToHexString(result),
+          iv: utils.bufferToHexString(context.iv),
+          version: utils.toString(context.additionalData)
         }
       })
       .catch(logFail)
