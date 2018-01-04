@@ -13,37 +13,38 @@ const logFail = (err) => {
 /**
  * Decrypt data with AES-GCM cipher
  *
- * @param {ArrayBuffer} data Data to decrypt
- * @param {ArrayBuffer} key Aes key as raw data. 128 or 256 bits
- * @param {ArrayBuffer} iv The IV with a size of 96 bits (12 bytes)
- * @param {string} mode The encryption mode : AES-GCM
- * @param {ArrayBuffer} additionalData The non-secret authenticated data
- * @returns {ArrayBuffer} The decrypted buffer
+ * @param {ArrayBuffer} data - Data to decrypt
+ * @param {ArrayBuffer} key - The AES key as raw data. 128 or 256 bits
+ * @param {ArrayBuffer} iv - The IV with a size of 96 bits (12 bytes)
+ * @param {string} mode - The encryption mode : AES-GCM
+ * @param {ArrayBuffer} additionalData - The non-secret authenticated data
+ * @returns {ArrayBuffer} - The decrypted buffer
  */
 const decryptBuffer = (data, key, iv, mode, additionalData) => {
   // TODO: test input params
   return crypto.subtle.importKey('raw', key, {
     name: mode
-  }, true, ['encrypt', 'decrypt']).then(function (bufKey) {
-    return crypto.subtle.decrypt({
-      name: mode,
-      iv,
-      additionalData: additionalData
-    }, bufKey, data).then(function (result) {
-      return new Uint8Array(result)
-    }, logFail)
-  }, logFail)
+  }, true, ['encrypt', 'decrypt'])
+    .then(bufKey => {
+      return crypto.subtle.decrypt({
+        name: mode,
+        iv,
+        additionalData: additionalData
+      }, bufKey, data)
+    })
+    .then(result => new Uint8Array(result))
+    .catch(logFail)
 }
 
 /**
  * Encrypt data with AES-GCM cipher
  *
- * @param {ArrayBuffer} data Data to encrypt
- * @param {ArrayBuffer} key Aes key as raw data. 128 or 256 bits
- * @param {ArrayBuffer} iv The IV with a size of 96 bits (12 bytes)
- * @param {string} mode The encryption mode : AES-GCM
- * @param {ArrayBuffer} additionalData The non-secret authenticated data
- * @returns {ArrayBuffer} The encrypted buffer
+ * @param {ArrayBuffer} data - Data to encrypt
+ * @param {ArrayBuffer} key - The AES key as raw data. 128 or 256 bits
+ * @param {ArrayBuffer} iv - The IV with a size of 96 bits (12 bytes)
+ * @param {string} mode - The encryption mode : AES-GCM
+ * @param {ArrayBuffer} additionalData - The non-secret authenticated data
+ * @returns {ArrayBuffer} - The encrypted buffer
  */
 const encryptBuffer = (data, key, iv, mode, additionalData) => {
   return crypto.subtle.importKey('raw', key, {
