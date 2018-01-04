@@ -1,4 +1,5 @@
 import utils from './utils'
+// @ts-check
 
 /**
  * Print error messages
@@ -58,12 +59,20 @@ const encryptBuffer = (data, key, iv, mode, additionalData) => {
     .then(result => new Uint8Array(result))
     .catch(logFail)
 }
-
+/**
+ * AES cipher 
+ * @constructor
+ * @param {Object} AES_params - The AES cipher parameters
+ * @param {string} AES_params.mode - The encryption mode : aes-gcm, aes-cbc
+ * @param {ArrayBuffer} AES_params.key - Aes key as raw data. 128 or 256 bits
+ * @param {number} params.keySize - The key size in bits (128, 192, 256)
+ * @param {string} [AES_params.additionalData] - Tee authenticated data, only for aes-gcm mode.
+ */
 function AES({ mode, key, keySize, additionalData }) {
-  this.mode = mode || 'aes-cbc'
+  this.mode = mode || 'aes-gcm'
   this.keySize = keySize || 128
   this.IV = null
-  this.key = key || ''
+  this.key = key || null
   this.additionalData = additionalData || ''
 }
 
@@ -79,7 +88,6 @@ AES.prototype.setAdditionalData = function (additionalData) {
 }
 
 AES.prototype.decrypt = function (input) {
-
   // Prepare context, all modes have at least 2 properties : iv and ciphertext
   let context = {}
   context.iv = input.hasOwnProperty('iv') ? utils.hexStringToBuffer2(input.iv) : ''
@@ -97,12 +105,13 @@ AES.prototype.decrypt = function (input) {
 }
 
 AES.prototype.encrypt = function (input) {
+  // all modes have at least the plaintext
+  let context = {}
+  context.plaintext = utils.toArray2(input)
   if (this.mode === 'aes-gcm') {
-    let context = {}
-    context.additionalData = utils.toArray2(this.additionalData)
+    // IV is 96 bits long === 12 bytes
     context.iv = this.iv || window.crypto.getRandomValues(new Uint8Array(12))
-    context.plaintext = utils.toArray2(input)
-    console.log('encrypt', context)
+    context.additionalData = utils.toArray2(this.additionalData)
 
     return encryptBuffer(context.plaintext, this.key, context.iv, this.mode, context.additionalData)
       .then(result => {
@@ -118,4 +127,15 @@ AES.prototype.encrypt = function (input) {
   }
 }
 
+/**
+ * Generate an AES key based on the cipher mode and keysize
+ *
+ * @returns {CryptoKey} - The generated AES key.
+ */
+AES.prototype.genAESKey = function () {
+  return crypto.subtle.generateKey({
+    name: this.mode || 'aes-gcm',
+    length: this.keySize || 128
+  }, true, ['decrypt', 'encrypt'])
+}
 module.exports = AES

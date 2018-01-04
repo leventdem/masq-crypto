@@ -1,6 +1,8 @@
 import * as cryp from './crypto'
 import localforage from 'localforage'
 import AES from './AES'
+import utils from './utils'
+
 
 var ecKeys = {}
 var MK = null
@@ -537,47 +539,36 @@ const init = () => {
 
 // initWs()
 // init()
-const cipher = {
-  ciphertext: '185d4d778bc3760399b1b211c08b7218dc95dff9167b7ffeb7b7fb7d582b85cfa07552d24f6e467d3f147a9dfa138fa7bd2a5a1122745874b24afb554b8500fcf962e6457dab1f6358836825d542',
-  iv: '0889883eb20a716c7d106c31',
-  version: ''
-}
-let res = null
-cryp.deriveKey('bonjour').then(function (derivedKey) {
-  const myAES = new AES(
-    {
-      mode: 'aes-gcm',
-      key: derivedKey,
-      keySize: 128
-    }
-  )
-  console.log(myAES)
-  // additionalData:"1.0.0"
-  // myAES.setAdditionalData('1.0.0')
-  console.log('ready to encrypt')
-  myAES.encrypt(JSON.stringify(apiData)).then(encrypted => {
-    console.log(encrypted)
-    myAES.decrypt(encrypted).then(decrypted => {
-      console.log(decrypted)
-    })
+
+// We generate a 128 bits key with crypto random
+const AESKey = window.crypto.getRandomValues(new Uint8Array(16))
+// We create an AES object with some paramters
+const myAES = new AES(
+  {
+    mode: 'aes-gcm',
+    key: AESKey,
+    keySize: 128
+  }
+)
+// optionnal : we add additionalData:"1.0.0"
+myAES.setAdditionalData('1.0.0')
+
+myAES.encrypt(JSON.stringify(apiData))
+  .then(encryptedJSON => {
+    console.log(encryptedJSON)
+    return myAES.decrypt(encryptedJSON)
   })
-})
+  .then(decryptedJSON => console.log(decryptedJSON))
+  .catch(err => console.log(err))
 
-//myAES.delay(1000).then(console.log)
+// Generate an AES key
+const aes = new AES(
+  {
+    mode: 'aes-gcm',
+    keySize: 128
+  }
+)
+aes.genAESKey()
+  .then(console.log)
+  .catch(err => console.log(err))
 
-// console.log(res);
-// myAES.setMode('caesar')
-// res = myAES.encrypt("MAISON")
-// console.log("ciphertext",res);
-// res = myAES.decrypt(res)
-// console.log("plaintext",res);
-
-
-// // If no passphrase is given, it will be generated.
-// cryp.deriveKey('').then(function (derivedKey) {
-//   // encryption
-//   cryp.encrypt(derivedKey, JSON.stringify(apiData), '1.0.0').then(function (encryptedJson) {
-//     console.log(encryptedJson)
-//     // Object { ciphertext: "cb9a804…", iv: "145a65b6535d00b5a3cce475", version: "1.0.0" }
-//   })
-// })
