@@ -301,7 +301,7 @@ const receiveStartECDH = (msg) => {
         Promise.reject(new Error('EC public key verification failed'))
         // TODO : send error message : the public key verification failes :
         // TODO -  MITM :-(
-        // TODO - have you changed yout Public RSA key ) sendRequestRSAPub()
+        // TODO - have you changed the Public RSA key ) sendRequestRSAPub()
       }
     })
     .catch(logFail)
@@ -343,6 +343,7 @@ const receiveStartECDH_ack = (msg) => {
         .catch(logFail)
     } else {
       log('EC public key verification fails')
+      Promise.reject(new Error('EC public key verification failed'))
       // TODO : send error message : the public key verification fails :
       // TODO -  MITM :-(
       // TODO - have you changed your Public RSA key => sendRequestRSAPub()
@@ -504,21 +505,31 @@ const validateUser = () => {
 }
 
 const checkRSA = () => {
-  return localforage.getItem('myRSA_Keys').then(keysFromStorage => {
-    if (keysFromStorage === null) {
-      log("No RSA keys at all, let's generate them for", clientId)
-      return cipherRSA.genRSAKeyPair().then(keys => {
-        return localforage.setItem('myRSA_Keys', keys).then(res => {
-          // log('Using:' + localforage.driver())
-          log('### Store RSA keys into IndexedDB with key myRSA_Keys ###')
-        }, logFail)
-      }, logFail)
-    } else {
-      cipherRSA.setKey(keysFromStorage)
-      // console.log(cipherRSA)
-      return 'RSA keys retrieved from IndexedDB'
-    }
-  }, logFail)
+  return localforage.getItem('myRSA_Keys')
+    .then(keysFromStorage => {
+      if (keysFromStorage === null) {
+        log("No RSA keys at all, let's generate them for ", clientId)
+        return cipherRSA.genRSAKeyPair()
+          .then(keys => {
+            let RSAKeys = {}
+            RSAKeys.public = keys.publicKey
+            RSAKeys.private = keys.privateKey
+            console.log(RSAKeys)
+            return localforage.setItem('myRSA_Keys', RSAKeys)
+          })
+          .then(res => {
+            // log('Using:' + localforage.driver())
+            log('### Store RSA keys into IndexedDB with key myRSA_Keys ###')
+            return 'ok'
+          })
+          .catch(logFail)
+      } else {
+        cipherRSA.setKey(keysFromStorage)
+        // console.log(cipherRSA)
+        return 'RSA keys retrieved from IndexedDB'
+      }
+    })
+    .catch(logFail)
 }
 
 const checkClientId = () => {
