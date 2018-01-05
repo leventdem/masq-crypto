@@ -2,9 +2,9 @@ import AES from './AES'
 import EC from './EC'
 import RSA from './RSA'
 
-const aliceRSA = new RSA({ curve: 'P-256' })
+const aliceRSA = new RSA({})
 const aliceEC = new EC({})
-const bobRSA = new RSA({ curve: 'P-256' })
+const bobRSA = new RSA({})
 const bobEC = new EC({})
 
 const delay = (ms) => {

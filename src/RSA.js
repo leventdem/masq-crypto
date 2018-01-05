@@ -12,10 +12,10 @@ const logFail = (err) => {
  * RSA
  * @constructor
  * @param {Object} RSA_params - The RSA cipher parameters
- * @param {string} RSA_params.curve - The elliptic curve ("P-256", "P-384", or "P-521")
+ * @param {string} RSA_params.modulusLength - The modulus length (4096 default)
  */
-function RSA({ curve }) {
-  this.curve = curve || 'P-256'
+function RSA({ modulusLength }) {
+  this.modulusLength = modulusLength || 4096
   this.public = null
   this.private = null
 }
