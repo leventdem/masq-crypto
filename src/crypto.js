@@ -1,7 +1,4 @@
 
-
-
-
 /**
  * Generate a PBKDF2 derived key based on user given passPhrase
  *

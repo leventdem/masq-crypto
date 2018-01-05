@@ -21,6 +21,14 @@ function RSA({ modulusLength }) {
 }
 
 /**
+ * Set RSA-PSS keys
+ *
+ * @param {Cryptokey} keys - The Cryptokey composed of both public and private key
+ */
+RSA.prototype.setKey = function (key) {
+  this.public = key.public
+  this.private = key.private
+}
 
 /**
  * Generate a RSA-PSS key pair for signature and verification

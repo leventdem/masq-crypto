@@ -5,9 +5,10 @@ import EC from './EC'
 import RSA from './RSA'
 import utils from './utils'
 
-
 var ecKeys = {}
 var MK = null
+
+
 
 const apiData = {
   POI_1: 'Tour eiffel',
@@ -23,7 +24,7 @@ var rsaKeys = {
 
 const parameters = {
   syncserver: 'ws://10.100.50.17:8080/',
-  // syncserver: 'https://sync-beta.qwantresearch.com/',
+  //syncserver: 'https://sync-beta.qwantresearch.com:8080/',
   syncroom: 'cryyyyptoooo',
   debug: true
 }
@@ -35,6 +36,9 @@ var log = (...args) => {
   const reg = (all, cur) => {
     if (typeof (cur) === 'string') {
       return all + cur
+    }
+    else {
+      return all + cur.toString()
     }
   }
   if (parameters.debug) {
@@ -98,14 +102,14 @@ const initWSClient = (server, room) => {
         window.clearInterval(window.timerID)
         delete window.timerID
       }
-      log(`Connected to Sync server at ${wsUrl}`)
+      console.log(`Connected to Sync server at ${wsUrl}`)
       // TODO: check if we need to sync with other devices
       return resolve(ws)
     }
 
     ws.onerror = (event) => {
       const err = `Could not connect to Sync server at ${wsUrl}`
-      // log(err)
+      console.log(err)
       return reject(err)
     }
   })
@@ -125,7 +129,7 @@ const initWs = (params) => {
   if (!params) {
     params = parameters
   }
-  log('Initializing WebSocket with params:', params)
+  console.log('Initializing WebSocket with params:', params)
   initWSClient(params.syncserver, params.syncroom).then((ws) => {
     wsClient = ws
 
@@ -430,7 +434,7 @@ const generateECKeysAndSign = () => {
     // file, only in memory
     ecKeys = key
     return cryp.exportKeyRaw(key.publicKey).then(rawKey => {
-      return cryp.signRSA(rsaKeys.private, rawKey).then(signature => {
+      return cryp.signRSA(cipherRSA.private, rawKey).then(signature => {
         // test purpose log(rsaKeys.public, signature, rawKey)
         // cryp.verifRSA(rsaKeys.public, signature, rawKey).then(result => {   if
         // (result) {     log('spefic test is succesful')   } }, logFail)
@@ -493,29 +497,24 @@ const validateUser = () => {
 }
 
 const checkRSA = () => {
-  return localforage.getItem('myRSA_Keys').then(key => {
-    if (key === null) {
+  return localforage.getItem('myRSA_Keys').then(keysFromStorage => {
+    if (keysFromStorage === null) {
       log("No RSA keys at all, let's generate them for", clientId)
-      return cryp.genRSAKeyPair().then(key => {
-        log(key)
-        rsaKeys.public = key.publicKey
-        rsaKeys.private = key.privateKey
-
-        log('export rawkey')
-        return cryp.exportRSAPubKeyRaw(key.publicKey).then(rawKey => {
-          log(rawKey)
-          rsaKeys.rawPubKey = rawKey
-          return localforage.setItem('myRSA_Keys', rsaKeys).then(res => {
-            // log('Using:' + localforage.driver())
-            log('### Store RSA keys into IndexedDB with key myRSA_Keys ###')
-            return 'First, time RSA keys have been generated'
+      return cipherRSA.genRSAKeyPair().then(keys => {
+        return localforage.setItem('myRSA_Keys', keys).then(res => {
+          // log('Using:' + localforage.driver())
+          log('### Store RSA keys into IndexedDB with key myRSA_Keys ###')
+          return cipherRSA.exportRSAPubKeyRaw(cipherRSA.public).then(rawKey => {
+            log(rawKey)
+            rsaKeys.rawPubKey = rawKey
           }, logFail)
         }, logFail)
       }, logFail)
     } else {
       // log(key)
-      rsaKeys = key
-      log(rsaKeys)
+      console.log(keysFromStorage)
+      cipherRSA.setKey(keysFromStorage)
+      console.log(cipherRSA)
       return 'RSA keys retrieved from IndexedDB'
     }
   }, logFail)
@@ -539,8 +538,16 @@ const init = () => {
   })
 }
 
-// initWs()
-// init()
+const cipherRSA = new RSA({})
+const cipherEC = new EC({})
+const cipherAES = new AES(
+  {
+    mode: 'aes-gcm',
+    keySize: 128
+  })
+
+initWs()
+init()
 
 // // We generate a 128 bits key with crypto random
 // const AESKey = window.crypto.getRandomValues(new Uint8Array(16))
@@ -573,12 +580,14 @@ const init = () => {
 // aes.genAESKey()
 //   .then(console.log)
 //   .catch(err => console.log(err))
-const myEC = new EC({})
-console.log(myEC)
 
-myEC.genECKeyPair()
-  .then(res => {
-    console.log(res)
-    console.log(myEC)
-  })
-  .catch(logFail)
+
+// const myEC = new EC({})
+// console.log(myEC)
+
+// myEC.genECKeyPair()
+//   .then(res => {
+//     console.log(res)
+//     console.log(myEC)
+//   })
+//   .catch(logFail)
