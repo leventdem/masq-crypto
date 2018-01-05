@@ -284,15 +284,15 @@ const receiveStartECDH = (msg) => {
   )
   checkReceivedECPubKey(
     msg.name,
-    cryp.hexStringToBuffer(msg.key),
-    cryp.hexStringToBuffer(msg.signature)
+    utils.hexStringToBuffer(msg.key),
+    utils.hexStringToBuffer(msg.signature)
   ).then(res => {
     if (res) {
       log('*** ', clientId, ' : EC public key verification of ', msg.name, ' : OK ***')
       generateECKeysAndSign().then(res => {
         sendStartECDH_ack(res.rawECPublicKey, res.signature)
         log('*** ', clientId, ' : computed the one time shared AES secret key. ***')
-        deriveMK(cryp.hexStringToBuffer(msg.key)).then((aesKey) => {
+        deriveMK(utils.hexStringToBuffer(msg.key)).then((aesKey) => {
           MK = aesKey
         }, logFail)
       }, logFail)
@@ -320,8 +320,8 @@ const receiveStartECDH_ack = (msg) => {
 
   checkReceivedECPubKey(
     msg.name,
-    cryp.hexStringToBuffer(msg.key),
-    cryp.hexStringToBuffer(msg.signature)
+    utils.hexStringToBuffer(msg.key),
+    utils.hexStringToBuffer(msg.signature)
   ).then(res => {
     if (res) {
       log('*** ', clientId, ' : EC public key verification of ', msg.name, ' : OK ***')
@@ -329,7 +329,7 @@ const receiveStartECDH_ack = (msg) => {
         '*** Now, both entities have exchanged and verified their EC public keys***'
       )
       log('*** ', clientId, ' : computed the one time shared AES secret key. ***')
-      deriveMK(cryp.hexStringToBuffer(msg.key)).then((MK) => {
+      deriveMK(utils.hexStringToBuffer(msg.key)).then((MK) => {
         log('*** ', clientId, ' : encrypts a message and sends it. ***')
         encryptData(MK, 'dataForFuture')
       })
@@ -357,10 +357,9 @@ const receiveData = (msg) => {
 }
 
 const deriveMK = (ECPublicKey) => {
-  return cryp.importKeyRaw(ECPublicKey).then(receivedECPublicKey => {
-    return cryp.deriveKeyECDH(
+  return cipherEC.importKeyRaw(ECPublicKey).then(receivedECPublicKey => {
+    return cipherEC.deriveKeyECDH(
       receivedECPublicKey,
-      ecKeys.privateKey,
       'aes-gcm',
       128
     )
@@ -368,7 +367,9 @@ const deriveMK = (ECPublicKey) => {
 }
 
 const encryptData = (aesKey, dataToEncrypt) => {
-  cryp.encrypt(aesKey, JSON.stringify(apiData), '1.0.0').then(encryptedJson => {
+  cipherAES.setKey(aesKey)
+  cipherAES.setAdditionalData('1.0.0')
+  cipherAES.encrypt(JSON.stringify(apiData)).then(encryptedJson => {
     // log(encryptedJson)
     sendData(encryptedJson)
   }, logFail)
@@ -390,10 +391,10 @@ const checkReceivedECPubKey = (name, receivedKey, signature) => {
     if (devices === null || !(name in devices)) {
       log('I could not find the RSA public Key of ', name)
       // TODO : call the RSA public key exchange messsage or procedure
-      return
+      return false
     }
-    return cryp.importRSAPubKeyRaw(devices[name]).then(senderRSAPublicKey => {
-      return cryp.verifRSA(senderRSAPublicKey, signature, receivedKey).then(
+    return cipherRSA.importRSAPubKeyRaw(devices[name]).then(senderRSAPublicKey => {
+      return cipherRSA.verifRSA(senderRSAPublicKey, signature, receivedKey).then(
         result => {
           if (result) {
             return true
@@ -423,28 +424,29 @@ const storeRSAPub = (name, key) => {
 }
 
 const decryptData = (name, encryptedData) => {
-  cryp.decrypt(MK, encryptedData).then(decryptedJson => {
+  cipherAES.setKey(MK)
+  cipherAES.decrypt(encryptedData).then(decryptedJson => {
     log(decryptedJson) // { POI_1: 'Tour eiffel', POI_2: 'Cafeteria'}
   }, logFail)
 }
 
 const generateECKeysAndSign = () => {
-  return cryp.genECKeyPair().then(key => {
+  return cipherEC.genECKeyPair().then(key => {
     // EC keys are stored in global variable ecKeys, they are never stored in a
     // file, only in memory
     ecKeys = key
-    return cryp.exportKeyRaw(key.publicKey).then(rawKey => {
-      return cryp.signRSA(cipherRSA.private, rawKey).then(signature => {
+    return cipherEC.exportKeyRaw().then(rawKey => {
+      return cipherRSA.signRSA(rawKey).then(signature => {
         // test purpose log(rsaKeys.public, signature, rawKey)
-        // cryp.verifRSA(rsaKeys.public, signature, rawKey).then(result => {   if
+        // utils.verifRSA(rsaKeys.public, signature, rawKey).then(result => {   if
         // (result) {     log('spefic test is succesful')   } }, logFail)
         return (
           // We convert to hexString because when the receiver parse the message, hte
           // obtained value are not Uint8array but Object which triggers an error with web
           // crypto for verif operation
           {
-            rawECPublicKey: cryp.bufferToHexString(rawKey),
-            signature: cryp.bufferToHexString(signature)
+            rawECPublicKey: utils.bufferToHexString(rawKey),
+            signature: utils.bufferToHexString(signature)
           }
         )
       }, logFail)
@@ -512,9 +514,9 @@ const checkRSA = () => {
       }, logFail)
     } else {
       // log(key)
-      console.log(keysFromStorage)
+      // console.log(keysFromStorage)
       cipherRSA.setKey(keysFromStorage)
-      console.log(cipherRSA)
+      // console.log(cipherRSA)
       return 'RSA keys retrieved from IndexedDB'
     }
   }, logFail)

@@ -72,8 +72,8 @@ EC.prototype.deriveKeyECDH = function (publicKey, type = 'aes-gcm', keySize = 12
  * {CryptoKey} key - The key that we extract raw value (available in EC.public)
  * @returns {arrayBuffer} The raw key
  */
-EC.prototype.exportKeyRaw = function () {
-  return crypto.subtle.exportKey('raw', this.public)
+EC.prototype.exportKeyRaw = function (key = null) {
+  return crypto.subtle.exportKey('raw', key || this.public)
     .then(rawKey => new Uint8Array(rawKey))
     .catch(logFail)
 }
