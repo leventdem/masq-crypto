@@ -11,8 +11,8 @@ const apiData = {
 }
 
 const parameters = {
-  syncserver: 'ws://10.100.50.17:8080/',
-  // syncserver: 'https://sync-beta.qwantresearch.com:8080/',
+  //syncserver: 'ws://10.100.50.17:8080/',
+  syncserver: 'wss://sync-beta.qwantresearch.com:8080/',
   syncroom: 'cryyyyptoooo',
   debug: true
 }
@@ -42,6 +42,9 @@ const logFail = (err) => {
   console.log(err)
 }
 
+/**
+ * Configuration of Indexeddb for data storage
+ */
 var DB = {
   configure: function () {
     localforage.config({
@@ -60,6 +63,7 @@ DB.configure()
 
 export const sendMessage = (msg) => {
   if (wsClient.readyState === wsClient.OPEN) {
+    log('*** sendMEssage : ', msg.type, ' ***')
     wsClient.send(JSON.stringify(msg))
   } else {
     log('Socket closed !')
@@ -125,36 +129,36 @@ const initWs = (params) => {
         const msg = JSON.parse(event.data)
         switch (msg.type) {
           case 'hello':
-            log('*** onMessage :', msg.type, ' ***')
+            log('*** onMEssage : ', msg.type, ' ***')
             receiveHello(msg.name)
             break
           case 'hello_ack':
-            log('*** onMessage :', msg.type, ' ***')
+            log('*** onMEssage : ', msg.type, ' ***')
             receiveHello_ack(msg.name)
             break
           case 'requestRSAPub':
-            log('*** onMessage :', msg.type, ' ***')
+            log('*** onMEssage : ', msg.type, ' ***')
             receiveRequestRSAPub(msg.name)
             break
           case 'requestRSAPub_ack':
-            log('*** onMessage :', msg.type, ' ***')
+            log('*** onMEssage : ', msg.type, ' ***')
             receiveRequestRSAPub_ack(msg)
             break
           case 'startECDH':
-            log('*** onMessage :', msg.type, ' ***')
+            log('*** onMEssage : ', msg.type, ' ***')
             receiveStartECDH(msg)
             break
           case 'startECDH_ack':
-            log('*** onMessage :', msg.type, ' ***')
+            log('*** onMEssage : ', msg.type, ' ***')
             receiveStartECDH_ack(msg)
             break
           case 'data':
-            log('*** onMessage :', msg.type, ' ***')
+            log('*** onMEssage : ', msg.type, ' ***')
             receiveData(msg)
             break
 
           default:
-            log('onMessage :', msg)
+            log('onMEssage : ', msg)
             break
         }
       } catch (err) {
@@ -225,7 +229,7 @@ const sendRequestRSAPub = () => {
 }
 
 const receiveRequestRSAPub = (name) => {
-  log(name, ' asks my RSA public Key')
+  log('*** ', clientId, ' : ', name, ' asks my RSA public Key')
   sendRequestRSAPub_ack(name)
 }
 
@@ -245,15 +249,10 @@ const sendRequestRSAPub_ack = (name) => {
 }
 
 const receiveRequestRSAPub_ack = (msg) => {
-  log(
-    '*** ',
-    clientId,
-    ' : RSA pub key of ',
-    msg.name,
-    ' is received ***'
+  log('*** ', clientId, ' : RSA pub key of ', msg.name, ' is received ***'
   )
   // log(msg.publicKeyRSA)
-  log('***Now, both entities have exchanged their RSA public keys***')
+  log('*** Now, both entities have exchanged their RSA public keys. ***')
   storeRSAPub(msg.name, msg.publicKeyRSA)
 }
 
@@ -282,11 +281,11 @@ const receiveStartECDH = (msg) => {
   )
     .then(res => {
       if (res) {
-        log('*** ', clientId, ' : EC public key verification of ', msg.name, ' : OK ***')
+        log('*** ', clientId, ' : verification of ', msg.name, ' EC public key : OK ***')
         generateECKeysAndSign()
           .then(res => {
             sendStartECDH_ack(res.rawECPublicKey, res.signature)
-            log('*** ', clientId, ' : computed the one time shared AES secret key. ***')
+            log('*** ', clientId, ' : computes the one time common AES secret key. ***')
             return cipherEC.deriveKeyECDH(
               utils.hexStringToBuffer(msg.key),
               'aes-gcm',
@@ -319,7 +318,7 @@ const sendStartECDH_ack = (ECPublicKey, signature) => {
 }
 
 const receiveStartECDH_ack = (msg) => {
-  log('*** ', msg.name, ' is ready to transfer files. ***')
+  log('*** ', clientId, ' : ', msg.name, ' is ready to transfer files. ***')
 
   checkReceivedECPubKey(
     msg.name,
@@ -327,11 +326,11 @@ const receiveStartECDH_ack = (msg) => {
     utils.hexStringToBuffer(msg.signature)
   ).then(res => {
     if (res) {
-      log('*** ', clientId, ' : EC public key verification of ', msg.name, ' : OK ***')
+      log('*** ', clientId, ' : verification of ', msg.name, ' EC public key : OK ***')
       log(
         '*** Now, both entities have exchanged and verified their EC public keys***'
       )
-      log('*** ', clientId, ' : computed the one time shared AES secret key. ***')
+      log('*** ', clientId, ' : computes the one time shared AES secret key. ***')
       return cipherEC.deriveKeyECDH(
         utils.hexStringToBuffer(msg.key),
         'aes-gcm',
@@ -362,7 +361,7 @@ const sendData = (encryptedData) => {
 }
 
 const receiveData = (msg) => {
-  log('*** ', msg.name, ' sends me data. Let us decrypt it')
+  log('*** ', clientId, ' : ', msg.name, ' sends me data. Let us decrypt it ***')
   decryptData(msg.name, msg.data)
 }
 
@@ -489,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function () {
 })
 
 const startECDH = () => {
-  log(clientId, ' generates EC keys.')
+  log('*** ', clientId, ' : generates a new EC key pair for a single message encryption. ***')
   generateECKeysAndSign().then(res => {
     sendStartECDH(res.rawECPublicKey, res.signature)
   })
@@ -515,8 +514,6 @@ const checkRSA = () => {
         }, logFail)
       }, logFail)
     } else {
-      // log(key)
-      // console.log(keysFromStorage)
       cipherRSA.setKey(keysFromStorage)
       // console.log(cipherRSA)
       return 'RSA keys retrieved from IndexedDB'
@@ -552,45 +549,3 @@ const cipherAES = new AES(
 
 initWs()
 init()
-
-// // We generate a 128 bits key with crypto random
-// const AESKey = window.crypto.getRandomValues(new Uint8Array(16))
-// // We create an AES object with some paramters
-// const myAES = new AES(
-//   {
-//     mode: 'aes-gcm',
-//     key: AESKey,
-//     keySize: 128
-//   }
-// )
-// // optionnal : we add additionalData:"1.0.0"
-// myAES.setAdditionalData('1.0.0')
-
-// myAES.encrypt(JSON.stringify(apiData))
-//   .then(encryptedJSON => {
-//     console.log(encryptedJSON)
-//     return myAES.decrypt(encryptedJSON)
-//   })
-//   .then(decryptedJSON => console.log(decryptedJSON))
-//   .catch(err => console.log(err))
-
-// // Generate an AES key
-// const aes = new AES(
-//   {
-//     mode: 'aes-gcm',
-//     keySize: 128
-//   }
-// )
-// aes.genAESKey()
-//   .then(console.log)
-//   .catch(err => console.log(err))
-
-// const myEC = new EC({})
-// console.log(myEC)
-
-// myEC.genECKeyPair()
-//   .then(res => {
-//     console.log(res)
-//     console.log(myEC)
-//   })
-//   .catch(logFail)
