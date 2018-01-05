@@ -4,19 +4,10 @@ import EC from './EC'
 import RSA from './RSA'
 import utils from './utils'
 
-var ecKeys = {}
-var MK = null
-
 const apiData = {
   POI_1: 'Tour eiffel',
   POI_2: 'Bastille',
   POI_3: 'Cafeteria'
-}
-
-var rsaKeys = {
-  public: null,
-  private: null,
-  rawPubKey: null
 }
 
 const parameters = {
@@ -212,14 +203,16 @@ const sendHello_ack = () => {
 }
 
 const receiveHello_ack = (name) => {
-  checkRSAPub(name).then(res => {
-    if (res) {
-      log('I already have the RSA public key of ', name)
-      log('***Now, both entities have exchanged their RSA public keys***')
-    } else {
-      sendRequestRSAPub()
-    }
-  })
+  checkRSAPub(name)
+    .then(res => {
+      if (res) {
+        log('I already have the RSA public key of ', name)
+        log('***Now, both entities have exchanged their RSA public keys***')
+      } else {
+        sendRequestRSAPub()
+      }
+    })
+    .catch(logFail)
 }
 
 const sendRequestRSAPub = () => {
@@ -286,23 +279,29 @@ const receiveStartECDH = (msg) => {
     msg.name,
     utils.hexStringToBuffer(msg.key),
     utils.hexStringToBuffer(msg.signature)
-  ).then(res => {
-    if (res) {
-      log('*** ', clientId, ' : EC public key verification of ', msg.name, ' : OK ***')
-      generateECKeysAndSign().then(res => {
-        sendStartECDH_ack(res.rawECPublicKey, res.signature)
-        log('*** ', clientId, ' : computed the one time shared AES secret key. ***')
-        deriveMK(utils.hexStringToBuffer(msg.key)).then((aesKey) => {
-          MK = aesKey
-        }, logFail)
-      }, logFail)
-    } else {
-      log('EC public key verification fails')
-      // TODO : send error message : the public key verification failes :
-      // TODO -  MITM :-(
-      // TODO - have you changed yout Public RSA key ) sendRequestRSAPub()
-    }
-  })
+  )
+    .then(res => {
+      if (res) {
+        log('*** ', clientId, ' : EC public key verification of ', msg.name, ' : OK ***')
+        generateECKeysAndSign()
+          .then(res => {
+            sendStartECDH_ack(res.rawECPublicKey, res.signature)
+            log('*** ', clientId, ' : computed the one time shared AES secret key. ***')
+            return deriveMK(utils.hexStringToBuffer(msg.key))
+          })
+          .then((aesKey) => {
+            cipherAES.setKey(aesKey)
+          })
+          .catch(logFail)
+      } else {
+        log('EC public key verification fails')
+        Promise.reject(new Error('EC public key verification failed'))
+        // TODO : send error message : the public key verification failes :
+        // TODO -  MITM :-(
+        // TODO - have you changed yout Public RSA key ) sendRequestRSAPub()
+      }
+    })
+    .catch(logFail)
 }
 
 const sendStartECDH_ack = (ECPublicKey, signature) => {
@@ -329,9 +328,9 @@ const receiveStartECDH_ack = (msg) => {
         '*** Now, both entities have exchanged and verified their EC public keys***'
       )
       log('*** ', clientId, ' : computed the one time shared AES secret key. ***')
-      deriveMK(utils.hexStringToBuffer(msg.key)).then((MK) => {
+      deriveMK(utils.hexStringToBuffer(msg.key)).then((aesKey) => {
         log('*** ', clientId, ' : encrypts a message and sends it. ***')
-        encryptData(MK, 'dataForFuture')
+        encryptData(aesKey, 'dataForFuture')
       })
     } else {
       log('EC public key verification fails')
@@ -435,7 +434,6 @@ const storeRSAPub = (name, key) => {
 }
 
 const decryptData = (name, encryptedData) => {
-  cipherAES.setKey(MK)
   cipherAES.decrypt(encryptedData)
     .then(decryptedJson => {
       log(decryptedJson) // { POI_1: 'Tour eiffel', POI_2: 'Cafeteria'}
@@ -445,7 +443,6 @@ const decryptData = (name, encryptedData) => {
 
 const generateECKeysAndSign = () => {
   return cipherEC.genECKeyPair().then(key => {
-    ecKeys = key
     return cipherEC.exportKeyRaw().then(rawKey => {
       return cipherRSA.signRSA(rawKey).then(signature => {
         return (
