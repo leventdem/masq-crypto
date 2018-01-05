@@ -28,7 +28,7 @@ function RSA({ curve }) {
  * @param {int} modulusLength Chosen modulus length (1024, 2048 or 4096)
  * @returns {Promise} RSA key pair : public and private
  */
-export const genRSAKeyPair = function (modulusLength = 4096) {
+RSA.prototype.genRSAKeyPair = function (modulusLength = 4096) {
   let self = this
   return crypto.subtle.generateKey({
     name: 'RSA-PSS',
@@ -68,7 +68,7 @@ RSA.prototype.verifRSA = (publicKey, signature, signedData) => {
  * @param {arrayBuffer} data - The data to be signed
  * @returns {arrayBuffer} - The signature
  */
-RSA.prototype.signRSA = (data) => {
+RSA.prototype.signRSA = function (data) {
   return crypto.subtle.sign({
     name: 'RSA-PSS',
     saltLength: 16
