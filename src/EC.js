@@ -41,23 +41,46 @@ EC.prototype.genECKeyPair = function () {
 }
 
 /**
+ * Check the received key format (CryptoKey or raw key).
+ * If raw, import the key and return the CryptoKey
+ *
+ * @param {obj} obj - A trick to call another prototype
+ * @returns {CryptoKey|arrayBuffer} - The public key
+ */
+EC.prototype.checkRaw = function (obj, key) {
+  return new Promise(function (resolve, reject) {
+    if (key instanceof Uint8Array) {
+      obj.importKeyRaw(key)
+        .then(resolve)
+        .catch(logFail)
+    }
+    else {
+      resolve(key)
+    }
+  })
+}
+
+/**
  * Derive  key (AES-GCM by default) during ECDH key exchange
  * The private EC key is already in EC.private
  *
- * @param {object} publicKey Public Key of the sender (verified)
+ * @param {Cryptokey|arrayBuffer} publicKey Public Key of the sender (verified) 
  * @param {object} privateKey Private Key of the receiver
  * @param {string} type Key type of the derived key (aes-cbc, aes-ctr)
  * @param {int} keySize Key size of the derived key in bits (128, 192, 256)
  * @returns {arrayBuffer} The derived key
  */
 EC.prototype.deriveKeyECDH = function (publicKey, type = 'aes-gcm', keySize = 128) {
-  return crypto.subtle.deriveKey({
-    name: 'ECDH',
-    public: publicKey
-  }, this.private, {
-      name: type,
-      length: keySize
-    }, true, ['decrypt', 'encrypt'])
+  return this.checkRaw(this, publicKey)
+    .then(key => {  
+      return crypto.subtle.deriveKey({
+        name: 'ECDH',
+        public: key
+      }, this.private, {
+          name: type,
+          length: keySize
+        }, true, ['decrypt', 'encrypt'])
+    })
     .then(derivedKey => {
       return crypto.subtle.exportKey('raw', derivedKey)
     })

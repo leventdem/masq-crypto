@@ -287,7 +287,11 @@ const receiveStartECDH = (msg) => {
           .then(res => {
             sendStartECDH_ack(res.rawECPublicKey, res.signature)
             log('*** ', clientId, ' : computed the one time shared AES secret key. ***')
-            return deriveMK(utils.hexStringToBuffer(msg.key))
+            return cipherEC.deriveKeyECDH(
+              utils.hexStringToBuffer(msg.key),
+              'aes-gcm',
+              128
+            )
           })
           .then((aesKey) => {
             cipherAES.setKey(aesKey)
@@ -328,10 +332,16 @@ const receiveStartECDH_ack = (msg) => {
         '*** Now, both entities have exchanged and verified their EC public keys***'
       )
       log('*** ', clientId, ' : computed the one time shared AES secret key. ***')
-      deriveMK(utils.hexStringToBuffer(msg.key)).then((aesKey) => {
-        log('*** ', clientId, ' : encrypts a message and sends it. ***')
-        encryptData(aesKey, 'dataForFuture')
-      })
+      return cipherEC.deriveKeyECDH(
+        utils.hexStringToBuffer(msg.key),
+        'aes-gcm',
+        128
+      )
+        .then((aesKey) => {
+          log('*** ', clientId, ' : encrypts a message and sends it. ***')
+          encryptData(aesKey, 'dataForFuture')
+        })
+        .catch(logFail)
     } else {
       log('EC public key verification fails')
       // TODO : send error message : the public key verification fails :
@@ -339,6 +349,7 @@ const receiveStartECDH_ack = (msg) => {
       // TODO - have you changed your Public RSA key => sendRequestRSAPub()
     }
   })
+    .catch(logFail)
 }
 
 const sendData = (encryptedData) => {
@@ -353,18 +364,6 @@ const sendData = (encryptedData) => {
 const receiveData = (msg) => {
   log('*** ', msg.name, ' sends me data. Let us decrypt it')
   decryptData(msg.name, msg.data)
-}
-
-const deriveMK = (ECPublicKey) => {
-  return cipherEC.importKeyRaw(ECPublicKey)
-    .then(receivedECPublicKey => {
-      return cipherEC.deriveKeyECDH(
-        receivedECPublicKey,
-        'aes-gcm',
-        128
-      )
-    })
-    .catch(logFail)
 }
 
 const encryptData = (aesKey, dataToEncrypt) => {
