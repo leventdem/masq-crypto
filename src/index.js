@@ -1,4 +1,3 @@
-import * as cryp from './crypto'
 import localforage from 'localforage'
 import AES from './AES'
 import EC from './EC'
@@ -7,8 +6,6 @@ import utils from './utils'
 
 var ecKeys = {}
 var MK = null
-
-
 
 const apiData = {
   POI_1: 'Tour eiffel',
@@ -24,7 +21,7 @@ var rsaKeys = {
 
 const parameters = {
   syncserver: 'ws://10.100.50.17:8080/',
-  //syncserver: 'https://sync-beta.qwantresearch.com:8080/',
+  // syncserver: 'https://sync-beta.qwantresearch.com:8080/',
   syncroom: 'cryyyyptoooo',
   debug: true
 }
@@ -36,8 +33,7 @@ var log = (...args) => {
   const reg = (all, cur) => {
     if (typeof (cur) === 'string') {
       return all + cur
-    }
-    else {
+    } else {
       return all + cur.toString()
     }
   }
@@ -223,7 +219,6 @@ const receiveHello_ack = (name) => {
     } else {
       sendRequestRSAPub()
     }
-
   })
 }
 
@@ -242,13 +237,18 @@ const receiveRequestRSAPub = (name) => {
 }
 
 const sendRequestRSAPub_ack = (name) => {
-  log('I send my RSA Public key to ', name)
-  let data = {
-    type: 'requestRSAPub_ack',
-    name: clientId,
-    publicKeyRSA: rsaKeys.rawPubKey
-  }
-  sendMessage(data)
+  log('I send my RSA Public KEY to ', name)
+  cipherRSA.exportRSAPubKeyRaw(cipherRSA.public)
+    .then(rawKey => {
+      console.log('my RSA Public key', rawKey)
+      let data = {
+        type: 'requestRSAPub_ack',
+        name: clientId,
+        publicKeyRSA: rawKey
+      }
+      sendMessage(data)
+    })
+    .catch(logFail)
 }
 
 const receiveRequestRSAPub_ack = (msg) => {
@@ -357,32 +357,40 @@ const receiveData = (msg) => {
 }
 
 const deriveMK = (ECPublicKey) => {
-  return cipherEC.importKeyRaw(ECPublicKey).then(receivedECPublicKey => {
-    return cipherEC.deriveKeyECDH(
-      receivedECPublicKey,
-      'aes-gcm',
-      128
-    )
-  }, logFail)
+  return cipherEC.importKeyRaw(ECPublicKey)
+    .then(receivedECPublicKey => {
+      return cipherEC.deriveKeyECDH(
+        receivedECPublicKey,
+        'aes-gcm',
+        128
+      )
+    })
+    .catch(logFail)
 }
 
 const encryptData = (aesKey, dataToEncrypt) => {
   cipherAES.setKey(aesKey)
   cipherAES.setAdditionalData('1.0.0')
-  cipherAES.encrypt(JSON.stringify(apiData)).then(encryptedJson => {
-    // log(encryptedJson)
-    sendData(encryptedJson)
-  }, logFail)
+  cipherAES.encrypt(JSON.stringify(apiData))
+    .then(encryptedJson => {
+      // log(encryptedJson)
+      sendData(encryptedJson)
+    })
+    .catch(logFail)
 }
 
 const checkRSAPub = (name) => {
-  return localforage.getItem('connectedDevices').then(devices => {
-    if (devices === null || !(name in devices)) {
-      return false
-    } else {
-      return true
-    }
-  }, logFail)
+  return localforage.getItem('connectedDevices')
+    .then(devices => {
+      if (devices === null || !(name in devices)) {
+        console.log('no RSA public key registered at all')
+        console.log(devices)
+        return false
+      } else {
+        return true
+      }
+    })
+    .catch(logFail)
 }
 
 const checkReceivedECPubKey = (name, receivedKey, signature) => {
@@ -393,65 +401,67 @@ const checkReceivedECPubKey = (name, receivedKey, signature) => {
       // TODO : call the RSA public key exchange messsage or procedure
       return false
     }
-    return cipherRSA.importRSAPubKeyRaw(devices[name]).then(senderRSAPublicKey => {
-      return cipherRSA.verifRSA(senderRSAPublicKey, signature, receivedKey).then(
-        result => {
-          if (result) {
-            return true
-          } else {
-            return false
-          }
-        },
-        logFail
-      )
-    }, logFail)
-  }, logFail)
+    return cipherRSA.importRSAPubKeyRaw(devices[name])
+  })
+    .then(senderRSAPublicKey => {
+      return cipherRSA.verifRSA(senderRSAPublicKey, signature, receivedKey)
+    })
+    .then(result => {
+      if (result) {
+        return true
+      } else {
+        return false
+      }
+    })
+    .catch(logFail)
 }
 
 const storeRSAPub = (name, key) => {
   var listDevices = {}
-  localforage.getItem('connectedDevices').then(devices => {
-    if (devices === null) {
-      listDevices[name] = key
-    } else {
-      listDevices = devices
-      listDevices[name] = key
-    }
-    localforage.setItem('connectedDevices', listDevices).then(res => {
+  localforage.getItem('connectedDevices')
+    .then(devices => {
+      if (devices === null) {
+        listDevices[name] = key
+      } else {
+        listDevices = devices
+        listDevices[name] = key
+      }
+      localforage.setItem('connectedDevices', listDevices)
+    })
+    .then(res => {
       log('Public key stored')
-    }, logFail)
-  }, logFail)
+    })
+    .catch(logFail)
 }
 
 const decryptData = (name, encryptedData) => {
   cipherAES.setKey(MK)
-  cipherAES.decrypt(encryptedData).then(decryptedJson => {
-    log(decryptedJson) // { POI_1: 'Tour eiffel', POI_2: 'Cafeteria'}
-  }, logFail)
+  cipherAES.decrypt(encryptedData)
+    .then(decryptedJson => {
+      log(decryptedJson) // { POI_1: 'Tour eiffel', POI_2: 'Cafeteria'}
+    })
+    .catch(logFail)
 }
 
 const generateECKeysAndSign = () => {
   return cipherEC.genECKeyPair().then(key => {
-    // EC keys are stored in global variable ecKeys, they are never stored in a
-    // file, only in memory
     ecKeys = key
     return cipherEC.exportKeyRaw().then(rawKey => {
       return cipherRSA.signRSA(rawKey).then(signature => {
-        // test purpose log(rsaKeys.public, signature, rawKey)
-        // utils.verifRSA(rsaKeys.public, signature, rawKey).then(result => {   if
-        // (result) {     log('spefic test is succesful')   } }, logFail)
         return (
-          // We convert to hexString because when the receiver parse the message, hte
-          // obtained value are not Uint8array but Object which triggers an error with web
-          // crypto for verif operation
+          /**
+           * We convert to hexString because when the receiver parse the message, the
+           * obtained value are not Uint8array but Object which triggers an error with web
+           * crypto for verification operation.
+           */
           {
             rawECPublicKey: utils.bufferToHexString(rawKey),
             signature: utils.bufferToHexString(signature)
           }
         )
-      }, logFail)
-    }, logFail)
-  }, logFail)
+      }).catch(logFail)
+    }).catch(logFail)
+  }).catch(logFail)
 }
 
 /*
@@ -506,10 +516,6 @@ const checkRSA = () => {
         return localforage.setItem('myRSA_Keys', keys).then(res => {
           // log('Using:' + localforage.driver())
           log('### Store RSA keys into IndexedDB with key myRSA_Keys ###')
-          return cipherRSA.exportRSAPubKeyRaw(cipherRSA.public).then(rawKey => {
-            log(rawKey)
-            rsaKeys.rawPubKey = rawKey
-          }, logFail)
         }, logFail)
       }, logFail)
     } else {
@@ -582,7 +588,6 @@ init()
 // aes.genAESKey()
 //   .then(console.log)
 //   .catch(err => console.log(err))
-
 
 // const myEC = new EC({})
 // console.log(myEC)
