@@ -234,10 +234,10 @@ const receiveRequestRSAPub = (name) => {
 }
 
 const sendRequestRSAPub_ack = (name) => {
-  log('I send my RSA Public KEY to ', name)
+  log('*** ', clientId, ' : sends the RSA public Key to ', name)
   cipherRSA.exportRSAPubKeyRaw(cipherRSA.public)
     .then(rawKey => {
-      console.log('my RSA Public key', rawKey)
+      //console.log('my RSA Public key', rawKey)
       let data = {
         type: 'requestRSAPub_ack',
         name: clientId,
@@ -479,6 +479,12 @@ document.addEventListener('DOMContentLoaded', function () {
       sendHello()
     })
   }
+  el = document.getElementById('init')
+  if (el) {
+    el.addEventListener('click', function (e) {
+      init()
+    })
+  }
 
   el = document.getElementById('start_ecdh')
   if (el) {
@@ -526,6 +532,7 @@ const checkRSA = () => {
       } else {
         cipherRSA.setKey(keysFromStorage)
         // console.log(cipherRSA)
+        log('RSA keys retrieved from IndexedDB')
         return 'RSA keys retrieved from IndexedDB'
       }
     })
@@ -533,21 +540,25 @@ const checkRSA = () => {
 }
 
 const checkClientId = () => {
-  localforage.getItem('clientId').then(client => {
-    if (client !== '') {
-      clientId = client
-    }
-    var el = document.getElementById('username')
-    if (el) { el.value = clientId }
-  }, logFail)
+  return localforage.getItem('clientId')
+    .then(client => {
+      if (client !== null) {
+        clientId = client
+      }
+      var el = document.getElementById('username')
+      if (el) { el.value = clientId }
+      return clientId
+    })
+    .catch(logFail)
 }
 
 const init = () => {
-  checkClientId()
   checkRSA().then((res) => {
-    document.getElementById('rsaKey' + clientId).innerHTML = 'RSA keys loaded !'
-    log(res)
+    if (clientId === 'bob' || clientId === 'alice') {
+      document.getElementById('rsaKey' + clientId).innerHTML = 'RSA keys loaded !'
+    }
   })
+    .catch(logFail)
 }
 
 const cipherRSA = new RSA({})
@@ -559,4 +570,4 @@ const cipherAES = new AES(
   })
 
 initWs()
-init()
+checkClientId()
