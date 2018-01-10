@@ -20,17 +20,13 @@ const logFail = (err) => {
  * @param {ArrayBuffer} additionalData - The non-secret authenticated data
  * @returns {ArrayBuffer} - The decrypted buffer
  */
-const decryptBuffer = (data, key, iv, mode, additionalData) => {
+const decryptBuffer = (data, key, cipherContext) => {
   // TODO: test input params
   return crypto.subtle.importKey('raw', key, {
-    name: mode
+    name: cipherContext.name
   }, true, ['encrypt', 'decrypt'])
     .then(bufKey => {
-      return crypto.subtle.decrypt({
-        name: mode,
-        iv,
-        additionalData: additionalData
-      }, bufKey, data)
+      return crypto.subtle.decrypt(cipherContext, bufKey, data)
     })
     .then(result => new Uint8Array(result))
     .catch(logFail)
@@ -46,22 +42,18 @@ const decryptBuffer = (data, key, iv, mode, additionalData) => {
  * @param {ArrayBuffer} additionalData - The non-secret authenticated data
  * @returns {ArrayBuffer} - The encrypted buffer
  */
-const encryptBuffer = (data, key, iv, mode, additionalData) => {
+const encryptBuffer = (data, key, cipherContext) => {
   return crypto.subtle.importKey('raw', key, {
-    name: mode
+    name: cipherContext.name
   }, true, ['encrypt', 'decrypt'])
     .then(bufKey => {
-      return crypto.subtle.encrypt({
-        name: mode,
-        iv,
-        additionalData
-      }, bufKey, data)
+      return crypto.subtle.encrypt(cipherContext, bufKey, data)
     })
     .then(result => new Uint8Array(result))
     .catch(logFail)
 }
 /**
- * AES cipher 
+ * AES cipher
  * @constructor
  * @param {Object} AES_params - The AES cipher parameters
  * @param {string} AES_params.mode - The encryption mode : aes-gcm, aes-cbc
@@ -89,15 +81,20 @@ AES.prototype.setAdditionalData = function (additionalData) {
 }
 
 AES.prototype.decrypt = function (input) {
-  // Prepare context, all modes have at least 2 properties : iv and ciphertext
+  // Prepare context, all modes have at least one property : ciphertext
   let context = {}
-  context.iv = input.hasOwnProperty('iv') ? utils.hexStringToBuffer(input.iv) : ''
+  let cipherContext = {}
   context.ciphertext = input.hasOwnProperty('ciphertext') ? utils.hexStringToBuffer(input.ciphertext) : ''
   if (this.mode === 'aes-gcm') {
+    context.iv = input.hasOwnProperty('iv') ? utils.hexStringToBuffer(input.iv) : ''
     // aes-gcm may have an additional authenticated data property (optional)
     context.additionalData = input.hasOwnProperty('version') ? utils.toArray(input.version) : []
+    // Prepare cipher context, depends on cipher mode
+    cipherContext.name = this.mode
+    cipherContext.iv = context.iv
+    cipherContext.additionalData = context.additionalData
 
-    return decryptBuffer(context.ciphertext, this.key, context.iv, this.mode, context.additionalData)
+    return decryptBuffer(context.ciphertext, this.key, cipherContext)
       .then(res => utils.toString(res))
       .catch(logFail)
   } else {
@@ -108,13 +105,18 @@ AES.prototype.decrypt = function (input) {
 AES.prototype.encrypt = function (input) {
   // all modes have at least the plaintext
   let context = {}
+  let cipherContext = {}
   context.plaintext = utils.toArray(input)
   if (this.mode === 'aes-gcm') {
     // IV is 96 bits long === 12 bytes
     context.iv = this.iv || window.crypto.getRandomValues(new Uint8Array(12))
     context.additionalData = utils.toArray(this.additionalData)
+    // Prepare cipher context, depends on cipher mode
+    cipherContext.name = this.mode
+    cipherContext.iv = context.iv
+    cipherContext.additionalData = context.additionalData
 
-    return encryptBuffer(context.plaintext, this.key, context.iv, this.mode, context.additionalData)
+    return encryptBuffer(context.plaintext, this.key, cipherContext)
       .then(result => {
         return {
           ciphertext: utils.bufferToHexString(result),
@@ -126,6 +128,20 @@ AES.prototype.encrypt = function (input) {
   } else {
     console.log(`The mode ${this.mode} is not yet supported`)
   }
+  //  else if (this.mode === 'aes-cbc') {
+  //   // IV is 128 bits long === 16 bytes
+  //   context.iv = this.iv || window.crypto.getRandomValues(new Uint8Array(12))
+
+  //   return encryptBuffer(context.plaintext, this.key, context.iv, this.mode)
+  //     .then(result => {
+  //       return {
+  //         ciphertext: utils.bufferToHexString(result),
+  //         iv: utils.bufferToHexString(context.iv),
+  //         version: utils.toString(context.additionalData)
+  //       }
+  //     })
+  //     .catch(logFail)
+  // }
 }
 
 /**
