@@ -136,6 +136,7 @@ class AES {
       this._mode = newMode
     } else {
       console.log(newMode + ' is not accepted.')
+      console.log(`Accepted mode are ${acceptedMode.join(', ')}`)
       console.log(`Default mode is 'aes-gcm'.`)
       this._mode = 'aes-gcm'
     }

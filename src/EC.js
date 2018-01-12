@@ -8,6 +8,13 @@ const logFail = (err) => {
   console.log(err)
 }
 
+
+const acceptedCurve = [
+  'P-256',
+  'P-384',
+  'P-521'
+]
+
 /**
  * Elliptic Curve
  * @constructor
@@ -19,6 +26,21 @@ class EC {
     this.curve = params.curve || 'P-256'
     this.publicKey = null
     this.privateKey = null
+  }
+
+  get curve() {
+    return this._curve
+  }
+
+  set curve(newCurve) {
+    if (acceptedCurve.includes(newCurve)) {
+      this._curve = newCurve
+    } else {
+      console.log(newCurve + ' is not accepted.')
+      console.log(`Accepted curves are ${acceptedCurve.join(', ')}`)
+      console.log(`Default curve is 'P-256'.`)
+      this._curve = 'P-256'
+    }
   }
 
   /**
