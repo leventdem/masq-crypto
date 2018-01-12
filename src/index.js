@@ -446,7 +446,7 @@ const generateECKeysAndSign = () => {
       return cipherRSA.signRSA(rawKey).then(signature => {
         return (
           /**
-           * We convert to hexString because when the receiver parse the message, the
+           * We convert to hexString because when the receiver parses the message, the
            * obtained value are not Uint8array but Object which triggers an error with web
            * crypto for verification operation.
            */
@@ -563,7 +563,7 @@ const init = () => {
 }
 
 const cipherRSA = new RSA({})
-const cipherEC = new EC({})
+const cipherEC = new EC({curve:"P-456"})
 const cipherAES = new AES(
   {
     mode: aesModes.GCM,

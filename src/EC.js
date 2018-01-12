@@ -6,8 +6,8 @@
  */
 const logFail = (err) => {
   console.log(err)
+  console.log(err.code)
 }
-
 
 const acceptedCurve = [
   'P-256',
@@ -38,8 +38,7 @@ class EC {
     } else {
       console.log(newCurve + ' is not accepted.')
       console.log(`Accepted curves are ${acceptedCurve.join(', ')}`)
-      console.log(`Default curve is 'P-256'.`)
-      this._curve = 'P-256'
+      this._curve = newCurve
     }
   }
 
@@ -60,7 +59,16 @@ class EC {
         self.privateKey = cryptoKey.privateKey
         return cryptoKey
       })
-      .catch(logFail)
+      .catch(err => {
+        switch (err.code) {
+          case 9:
+            console.log('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted')
+            break;
+          default:
+            console.log(err)
+            break;
+        }
+      })
   }
 
   /**

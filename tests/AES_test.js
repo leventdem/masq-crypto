@@ -135,3 +135,29 @@ const aesCTR = () => {
     .then(decryptedJSON => console.log(decryptedJSON))
     .catch(err => console.log(err))
 }
+
+
+const aesGCMKeyGenerated = () => {
+
+  const cipherAES2 = new AES(
+    {
+      mode: 'aes-gcm',
+      keySize: 128
+    }
+  )
+
+  delay(2000).then(() => {
+    return cipherAES2.genAESKey()
+  })
+    .then(key => {
+      cipherAES2.key = key
+      return cipherAES2.encrypt(JSON.stringify(apiData))
+    })
+    .then(encryptedJSON => {
+      console.log(encryptedJSON)
+      return cipherAES2.decrypt(encryptedJSON)
+    })
+    .then(decryptedJSON => console.log(decryptedJSON))
+    .catch(err => console.log(err))
+
+}
