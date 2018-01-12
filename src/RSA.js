@@ -11,109 +11,121 @@ const logFail = (err) => {
 /**
  * RSA
  * @constructor
- * @param {Object} RSA_params - The RSA cipher parameters
- * @param {string} RSA_params.modulusLength - The modulus length (4096 default)
+ * @param {Object} params - The RSA cipher parameters
+ * @param {string} params.modulusLength - The modulus length (4096 default)
  */
-function RSA({ modulusLength }) {
-  this.modulusLength = modulusLength || 4096
-  this.public = null
-  this.private = null
-}
+class RSA {
+  constructor(params) {
+    this.modulusLength = params.modulusLength || 4096
+    this.publicKey = null
+    this.private = null
+  }
 
-/**
- * Set RSA-PSS keys
- *
- * @param {Cryptokey} keys - The Cryptokey composed of both public and private key
- */
-RSA.prototype.setKey = function (key) {
-  this.public = key.public
-  this.private = key.private
-}
+  get publicKey() {
+    return this._publicKey
+  }
 
-/**
- * Generate a RSA-PSS key pair for signature and verification
- *
- * @param {int} modulusLength Chosen modulus length (1024, 2048 or 4096)
- * @returns {Promise} RSA key pair : public and private
- */
-RSA.prototype.genRSAKeyPair = function (modulusLength = 4096) {
-  let self = this
-  return crypto.subtle.generateKey({
-    name: 'RSA-PSS',
-    modulusLength: modulusLength, // can be 1024, 2048, or 4096
-    publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-    hash: {
-      name: 'SHA-256'
-    }
-  }, false, ['sign', 'verify'])
-    .then(cryptoKey => {
-      self.public = cryptoKey.publicKey
-      self.private = cryptoKey.privateKey
-      return cryptoKey
-    })
-    .catch(logFail)
-}
+  /**
+   * Set RSA-PSS keys
+   *
+   * @param {Cryptokey} keys - The public RSA key
+   */
+  set publicKey(newPublicKey) {
+    this._publicKey = newPublicKey
+  }
 
-/**
- * Verif data (e.g. raw EC public key in case of ECDH)
- *
- * @param {CryptoKey} publicKey - The public RSA Key used to verify data signature
- * @param {arrayBuffer} signature - The data signature
- * @param {arrayBuffer} signedData - Signed data
- * @returns {arrayBuffer} - The signature
- */
-RSA.prototype.verifRSA = (publicKey, signature, signedData) => {
-  return crypto.subtle.verify({
-    name: 'RSA-PSS',
-    saltLength: 16
-  }, publicKey, signature, signedData)
-}
+  get privateKey() {
+    return this._privateKey
+  }
 
-/**
- * Sign data (e.g. raw EC public key in case of ECDH)
- * RSA private key is already stored in RSA.private
- *
- * @param {arrayBuffer} data - The data to be signed
- * @returns {arrayBuffer} - The signature
- */
-RSA.prototype.signRSA = function (data) {
-  return crypto.subtle.sign({
-    name: 'RSA-PSS',
-    saltLength: 16
-  }, this.private, data)
-    .then(signature => new Uint8Array(signature))
-    .catch(logFail)
-}
+  set privateKey(newPrivateKey) {
+    this._privateKey = newPrivateKey
+  }
 
-/**
- * Import RSA-PSS public key
- *
- * @param {jwk} key - The key (jwk format) that we want to import
- * @returns {Promise} - The imported key as CryptoKey
- */
-RSA.prototype.importRSAPubKeyRaw = function (key) {
-  return crypto.subtle.importKey('jwk', {
-    kty: key.kty,
-    e: key.e,
-    n: key.n,
-    alg: key.alg,
-    ext: key.ext
-  }, {
-    name: 'RSA-PSS',
-    hash: {
-      name: 'SHA-256'
-    }
-  }, false, ['verify'])
-}
+  /**
+   * Generate a RSA-PSS key pair for signature and verification
+   *
+   * @param {int} modulusLength Chosen modulus length (1024, 2048 or 4096)
+   * @returns {Promise} RSA key pair : publicKey and privateKey
+   */
+  genRSAKeyPair(modulusLength = 4096) {
+    let self = this
+    return crypto.subtle.generateKey({
+      name: 'RSA-PSS',
+      modulusLength: modulusLength, // can be 1024, 2048, or 4096
+      publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+      hash: {
+        name: 'SHA-256'
+      }
+    }, false, ['sign', 'verify'])
+      .then(cryptoKey => {
+        self.publicKey = cryptoKey.publicKey
+        self.privateKey = cryptoKey.privateKey
+        return cryptoKey
+      })
+      .catch(logFail)
+  }
 
-/**
- * Export RSA-PSS public key
- *
- * @param {CryptoKey} key The key that we extract raw value
- * @returns {Promise} The raw key
- */
-RSA.prototype.exportRSAPubKeyRaw = function (key) {
-  return crypto.subtle.exportKey('jwk', key)
-}
+  /**
+   * Verif data (e.g. raw EC public key in case of ECDH)
+   *
+   * @param {CryptoKey} publicKey - The public RSA Key used to verify data signature
+   * @param {arrayBuffer} signature - The data signature
+   * @param {arrayBuffer} signedData - Signed data
+   * @returns {arrayBuffer} - The signature
+   */
+  verifRSA(publicKey, signature, signedData) {
+    return crypto.subtle.verify({
+      name: 'RSA-PSS',
+      saltLength: 16
+    }, publicKey, signature, signedData)
+  }
 
-module.exports = RSA
+  /**
+   * Sign data (e.g. raw EC public key in case of ECDH)
+   * RSA private key is already stored in RSA.privateKey
+   *
+   * @param {arrayBuffer} data - The data to be signed
+   * @returns {arrayBuffer} - The signature
+   */
+  signRSA(data) {
+    return crypto.subtle.sign({
+      name: 'RSA-PSS',
+      saltLength: 16
+    }, this.privateKey, data)
+      .then(signature => new Uint8Array(signature))
+      .catch(logFail)
+  }
+
+  /**
+   * Import RSA-PSS public key
+   *
+   * @param {jwk} key - The key (jwk format) that we want to import
+   * @returns {Promise} - The imported key as CryptoKey
+   */
+  importRSAPubKeyRaw(key) {
+    return crypto.subtle.importKey('jwk', {
+      kty: key.kty,
+      e: key.e,
+      n: key.n,
+      alg: key.alg,
+      ext: key.ext
+    }, {
+        name: 'RSA-PSS',
+        hash: {
+          name: 'SHA-256'
+        }
+      }, false, ['verify'])
+  }
+
+  /**
+   * Export RSA-PSS public key
+   *
+   * @param {CryptoKey} key The key that we extract raw value
+   * @returns {Promise} The raw key
+   */
+  exportRSAPubKeyRaw(key) {
+    return crypto.subtle.exportKey('jwk', key)
+  }
+}
+export { RSA as default }

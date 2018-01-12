@@ -235,7 +235,7 @@ const receiveRequestRSAPub = (name) => {
 
 const sendRequestRSAPub_ack = (name) => {
   log('*** ', clientId, ' : sends the RSA public Key to ', name)
-  cipherRSA.exportRSAPubKeyRaw(cipherRSA.public)
+  cipherRSA.exportRSAPubKeyRaw(cipherRSA.publicKey)
     .then(rawKey => {
       // console.log('my RSA Public key', rawKey)
       let data = {
@@ -530,7 +530,8 @@ const checkRSA = () => {
           })
           .catch(logFail)
       } else {
-        cipherRSA.setKey(keysFromStorage)
+        cipherRSA.publicKey = keysFromStorage.public
+        cipherRSA.privateKey = keysFromStorage.private
         // console.log(cipherRSA)
         log('RSA keys retrieved from IndexedDB')
         return 'RSA keys retrieved from IndexedDB'
