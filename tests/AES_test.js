@@ -48,3 +48,90 @@ const aes = new AES(
 aes.genAESKey()
   .then(console.log)
   .catch(err => console.log(err))
+
+
+
+const aesCBC = () => {
+  // EXAMPLE
+  const data = {
+    POI_1: 'Tour eiffel',
+    POI_2: 'Bastille',
+    POI_3: 'Cafeteria'
+  }
+
+  // We generate a 128 bits key with crypto random
+  const AESKey = window.crypto.getRandomValues(new Uint8Array(16))
+  // We create an AES object with some paramters
+  const myAES = new AES(
+    {
+      mode: 'aes-cbc',
+      key: AESKey,
+      keySize: 128
+    }
+  )
+
+  myAES.encrypt(JSON.stringify(data))
+    .then(encryptedJSON => {
+      console.log(encryptedJSON)
+      return myAES.decrypt(encryptedJSON)
+    })
+    .then(decryptedJSON => console.log(decryptedJSON))
+    .catch(err => console.log(err))
+}
+
+const aesGCM = () => {
+  const apiData = {
+    POI_1: 'Tour eiffel',
+    POI_2: 'Bastille',
+    POI_3: 'Cafeteria'
+  }
+
+  // We generate a 128 bits key with crypto random
+  const AESKey = window.crypto.getRandomValues(new Uint8Array(16))
+  // We create an AES object with some paramters
+  const cipherAES = new AES(
+    {
+      mode: 'aes-gcm',
+      key: AESKey,
+      keySize: 128
+    }
+  )
+  // optionnal : we add additionalData:"1.0.0"
+  cipherAES.additionalData = 3
+
+  cipherAES.encrypt(JSON.stringify(apiData))
+    .then(encryptedJSON => {
+      console.log(encryptedJSON)
+      return cipherAES.decrypt(encryptedJSON)
+    })
+    .then(decryptedJSON => console.log(decryptedJSON))
+    .catch(err => console.log(err))
+}
+
+const aesCTR = () => {
+  // EXAMPLE
+  const data = {
+    POI_1: 'Tour eiffel',
+    POI_2: 'Bastille',
+    POI_3: 'Cafeteria'
+  }
+
+  // We generate a 128 bits key with crypto random
+  const AESKey = window.crypto.getRandomValues(new Uint8Array(16))
+  // We create an AES object with some paramters
+  const myAES = new AES(
+    {
+      mode: aesModes.CTR,
+      key: AESKey,
+      keySize: 128
+    }
+  )
+  console.log(myAES)
+  myAES.encrypt(JSON.stringify(data))
+    .then(encryptedJSON => {
+      console.log(encryptedJSON)
+      return myAES.decrypt(encryptedJSON)
+    })
+    .then(decryptedJSON => console.log(decryptedJSON))
+    .catch(err => console.log(err))
+}
