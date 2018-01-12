@@ -1,5 +1,5 @@
 import localforage from 'localforage'
-import AES from './AES'
+import AES, { aesModes } from './AES'
 import EC from './EC'
 import RSA from './RSA'
 import utils from './utils'
@@ -11,7 +11,7 @@ const apiData = {
 }
 
 const parameters = {
-  //syncserver: 'ws://10.100.50.17:8080/',
+  // syncserver: 'ws://10.100.50.17:8080/',
   syncserver: 'wss://sync-beta.qwantresearch.com:8080/',
   syncroom: 'cryyyyptoooo',
   debug: true
@@ -237,7 +237,7 @@ const sendRequestRSAPub_ack = (name) => {
   log('*** ', clientId, ' : sends the RSA public Key to ', name)
   cipherRSA.exportRSAPubKeyRaw(cipherRSA.public)
     .then(rawKey => {
-      //console.log('my RSA Public key', rawKey)
+      // console.log('my RSA Public key', rawKey)
       let data = {
         type: 'requestRSAPub_ack',
         name: clientId,
@@ -293,7 +293,7 @@ const receiveStartECDH = (msg) => {
             )
           })
           .then((aesKey) => {
-            cipherAES.setKey(aesKey)
+            cipherAES.key = aesKey
           })
           .catch(logFail)
       } else {
@@ -367,8 +367,8 @@ const receiveData = (msg) => {
 }
 
 const encryptData = (aesKey, dataToEncrypt) => {
-  cipherAES.setKey(aesKey)
-  cipherAES.setAdditionalData('1.0.0')
+  cipherAES.key = aesKey
+  cipherAES.additionalData = '1.0.0'
   cipherAES.encrypt(JSON.stringify(apiData))
     .then(encryptedJson => {
       // log(encryptedJson)
@@ -565,7 +565,7 @@ const cipherRSA = new RSA({})
 const cipherEC = new EC({})
 const cipherAES = new AES(
   {
-    mode: 'aes-gcm',
+    mode: aesModes.GCM,
     keySize: 128
   })
 
