@@ -128,4 +128,4 @@ class RSA {
     return crypto.subtle.exportKey('jwk', key)
   }
 }
-export { RSA as default }
+export default RSA

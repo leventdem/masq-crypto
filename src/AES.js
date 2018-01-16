@@ -1,4 +1,4 @@
-import utils from './utils'
+import * as utils from './utils.js'
 // @ts-check
 
 /**
@@ -136,7 +136,7 @@ class AES {
       this._mode = newMode
     } else {
       console.log(newMode + ' is not accepted.')
-      console.log(`Accepted mode are ${acceptedMode.join(', ')}`)
+      console.log(`Accepted modes are ${acceptedMode.join(', ')}`)
       console.log(`Default mode is 'aes-gcm'.`)
       this._mode = 'aes-gcm'
     }
@@ -287,4 +287,5 @@ class AES {
     }, true, ['decrypt', 'encrypt'])
   }
 }
-export { AES as default, aesModes }
+export default AES
+export { aesModes }

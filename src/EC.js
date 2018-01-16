@@ -146,4 +146,4 @@ class EC {
     }, true, [])
   }
 }
-export { EC as default }
+export default EC
