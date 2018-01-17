@@ -12,11 +12,15 @@ const logFail = (err) => {
  * RSA
  * @constructor
  * @param {Object} params - The RSA cipher parameters
+ * @param {string} params.hash The hash function ("SHA-256", "SHA-384", "SHA-512")
+ * @param {string} params.name The algorithm name  ("RSA-PSS")
  * @param {string} params.modulusLength - The modulus length (4096 default)
  */
 class RSA {
   constructor(params) {
     this.modulusLength = params.modulusLength || 4096
+    this.hash = params.hash || 'SHA-256'
+    this.name = params.name || 'RSA-PSS'
     this.publicKey = null
     this.private = null
   }
@@ -88,11 +92,11 @@ class RSA {
    * @param {arrayBuffer} data - The data to be signed
    * @returns {arrayBuffer} - The signature
    */
-  signRSA(data) {
+  signRSA(data, privateKey) {
     return crypto.subtle.sign({
       name: 'RSA-PSS',
       saltLength: 16
-    }, this.privateKey, data)
+    }, privateKey || this.privateKey, data)
       .then(signature => new Uint8Array(signature))
       .catch(logFail)
   }
@@ -125,7 +129,7 @@ class RSA {
    * @returns {Promise} The raw key
    */
   exportRSAPubKeyRaw(key) {
-    return crypto.subtle.exportKey('jwk', key)
+    return crypto.subtle.exportKey('jwk', key || this.publicKey)
   }
 }
 export default RSA

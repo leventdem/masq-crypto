@@ -1,6 +1,5 @@
-import sum from './sum.js'
-import Person from '../src/Person.js'
 import AES, { aesModes } from '../src/AES.js'
+import * as utils from '../src/utils.js'
 
 // To avoid error on import please specify the default export in the imported class
 // with export default <className> instead of export {className as default}
@@ -215,14 +214,14 @@ describe('MasqCrypto AES', function () {
         it(keyName, () => {
           // We generate a 128 bits key with crypto random
           // getRandomValues takes bytes # instead of bits #
-          let AESKey = window.crypto.getRandomValues(new Uint8Array(length/8))
+          let AESKey = window.crypto.getRandomValues(new Uint8Array(length / 8))
           should.exist(AESKey, 'Aes key is empty')
           keyTemplate.key = AESKey
         })
       })
     })
   })
-  console.log(keys)
+  // console.log(keys)
   context('Encrypt/Decrypt with raw keys as input', () => {
     context('AES-CBC', () => {
       // Filter CBC
@@ -242,7 +241,6 @@ describe('MasqCrypto AES', function () {
                   keySize: key.keySize
                 }
               )
-              console.log(myAES)
               myAES.encrypt(JSON.stringify(message.data))
                 .then(encryptedJSON => {
                   // console.log(encryptedJSON)
@@ -361,4 +359,5 @@ describe('MasqCrypto AES', function () {
         })
     })
   })
+})
 })

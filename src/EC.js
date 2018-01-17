@@ -19,10 +19,12 @@ const acceptedCurve = [
  * Elliptic Curve
  * @constructor
  * @param {Object} params - The EC cipher parameters
+ * @param {string} params.name - The algorithm name used during key generation or derivation
  * @param {string} params.curve - The elliptic curve ("P-256", "P-384", or "P-521")
  */
 class EC {
   constructor(params) {
+    this.name = params.name || 'ECDH'
     this.curve = params.curve || 'P-256'
     this.publicKey = null
     this.privateKey = null
@@ -51,7 +53,7 @@ class EC {
   genECKeyPair() {
     let self = this
     return crypto.subtle.generateKey({
-      name: 'ECDH',
+      name: this.name,
       namedCurve: this.curve
     }, false, ['deriveKey', 'deriveBits'])
       .then(cryptoKey => {
@@ -96,18 +98,18 @@ class EC {
    * The private EC key is already in EC.privateKey
    *
    * @param {Cryptokey|arrayBuffer} publicKey Public Key of the sender (verified) 
-   * @param {object} privateKey Private Key of the receiver
-   * @param {string} type Key type of the derived key (aes-cbc, aes-ctr)
+   * @param {string} type Key type of the derived key (aes-cbc, aes-gcm)
    * @param {int} keySize Key size of the derived key in bits (128, 192, 256)
+   * @param {CryptoKey} [privateKey] The EC private key if not generated via genECKeyPair
    * @returns {arrayBuffer} The derived key
    */
-  deriveKeyECDH(publicKey, type = 'aes-gcm', keySize = 128) {
+  deriveKeyECDH(publicKey, type = 'aes-gcm', keySize = 128, privateKey) {
     return this.checkRaw(this, publicKey)
       .then(key => {
         return crypto.subtle.deriveKey({
-          name: 'ECDH',
+          name: this.name,
           public: key
-        }, this.privateKey, {
+        }, privateKey || this.privateKey, {
             name: type,
             length: keySize
           }, true, ['decrypt', 'encrypt'])
@@ -139,9 +141,9 @@ class EC {
    * @param {String} curve - The elliptic curve used at the imported key creation
    * @returns {Promise} - The CryptoKey
    */
-  importKeyRaw(key, curve = 'P-256') {
+  importKeyRaw(key, curve = 'P-256', algName = 'ECDH') {
     return crypto.subtle.importKey('raw', key, {
-      name: 'ECDH',
+      name: algName,
       namedCurve: curve
     }, true, [])
   }
