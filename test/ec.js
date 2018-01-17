@@ -100,7 +100,7 @@ describe('MasqCrypto EC', function () {
                 aliceEC.deriveKeyECDH(BobECPubKey, aesModes.GCM, 128).then(AESKeyAlice => {
                   bobEC.importKeyRaw(aliceawKey).then(AliceECPubKey => {
                     bobEC.deriveKeyECDH(AliceECPubKey, 'aes-gcm', 128).then(AESKeyBob => {
-                      console.log(AESKeyAlice, AESKeyBob)
+                      //console.log(AESKeyAlice, AESKeyBob)
                       chai.assert.deepEqual(AESKeyAlice, AESKeyBob, 'Both derived symmetric key do not match')
                     }).then(done, done)
                   })
@@ -111,5 +111,5 @@ describe('MasqCrypto EC', function () {
         })
       })
     })
-  })
+  })  
 })

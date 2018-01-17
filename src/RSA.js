@@ -96,7 +96,7 @@ class RSA {
     return crypto.subtle.sign({
       name: 'RSA-PSS',
       saltLength: 16
-    }, privateKey || this.privateKey, data)
+    }, privateKey || this.privateKey, data)
       .then(signature => new Uint8Array(signature))
       .catch(logFail)
   }
@@ -105,9 +105,11 @@ class RSA {
    * Import RSA-PSS public key
    *
    * @param {jwk} key - The key (jwk format) that we want to import
+   * @param {jwk} name - The algorithm name of the imported RSA key (default : "RSA-PSS")
+   * @param {jwk} hash - The hash name of the imported RSA key (default : "SHA-256")
    * @returns {Promise} - The imported key as CryptoKey
    */
-  importRSAPubKeyRaw(key) {
+  importRSAPubKeyRaw(key, name, hash) {
     return crypto.subtle.importKey('jwk', {
       kty: key.kty,
       e: key.e,
@@ -115,9 +117,9 @@ class RSA {
       alg: key.alg,
       ext: key.ext
     }, {
-        name: 'RSA-PSS',
+        name: name || 'RSA-PSS',
         hash: {
-          name: 'SHA-256'
+          name: hash || 'SHA-256'
         }
       }, false, ['verify'])
   }
@@ -128,8 +130,8 @@ class RSA {
    * @param {CryptoKey} key The key that we extract raw value
    * @returns {Promise} The raw key
    */
-  exportRSAPubKeyRaw(key) {
-    return crypto.subtle.exportKey('jwk', key || this.publicKey)
+  exportRSAPubKeyRaw(key, format) {
+    return crypto.subtle.exportKey(format || 'jwk', key || this.publicKey)
   }
 }
 export default RSA

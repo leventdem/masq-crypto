@@ -23,64 +23,8 @@ tr
 </head>
 <body >
   <h1>Crypto</h1>
-  <table>
-    <tr>
-        <th>ECDH:</th>
-    </tr>
-    <tr>
-        <button type="button" id="init">Init</button>
-    </tr>
-    <tr>
-      <th>
-        <td>
-      Username: <input type="text" id="username" value="...">
-    </td>
-    <td>
+  <h2> <a href="./test/index.html">Go to the test page</a></h2>
+  <h2> <a href="./src/example/pfs.html">Go to the PFS demo</a></h2>
 
-      <button type="button" id="validateUserName">Validate user name</button>
-    </td>
-    </th>
-    </tr>
-      <tr>
-          <th></th>
-          <th>
-              <img src="./src/bob.png" style="width:150px;height:150px;">
-          </th>
-          <th>
-              <img src="./src/alice.png" style="width:200px;height:150px;">
-          </th>
-      </tr>
-
-
-      <tr>
-          <th>Step 0:</th>
-          <td>
-
-              <div id="rsaKeybob"></div>
-          </td>
-          <th>
-
-              <div id="rsaKeyalice"></div>
-          </th>
-      </tr>
-      <tr>
-          <th>Step 1:</th>
-          <td>
-              <button type="button" id="exchange_RSA_pub_keys">Request RSA public key </button>
-          </td>
-      </tr>
-      <tr>
-          <th>Step 2:</th>
-          <td>
-                <button type="button" id="start_ecdh">Start ECDH </button>
-              <div id="startBob"></div>
-          </td>
-          <th>
-
-              <div id="startAlice"></div>
-          </th>
-      </tr>
-    </table>
-    <script type="text/javascript" src="dist/masqCrypto.js"></script>
 </body>
 </html>

@@ -360,4 +360,3 @@ describe('MasqCrypto AES', function () {
     })
   })
 })
-})

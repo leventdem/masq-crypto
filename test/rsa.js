@@ -82,14 +82,13 @@ describe('MasqCrypto RSA', function () {
                 return Promise.resolve()
               })
               .then(done, done)
-          }).timeout(modLen === 4096 ? 6000 : 3000)
+          }).timeout(modLen === 4096 ? 8000 : 3000)
         })
       })
     })
   })
-  context("Sign/Verify", () => {
-
-    keys.filter(key => key.usages.some(usage => usage === "sign"))
+  context('Sign/Verify', () => {
+    keys.filter(key => key.usages.some(usage => usage === 'sign'))
       .forEach(key => {
         it(key.name, done => {
           // TODO: Add label
@@ -97,44 +96,33 @@ describe('MasqCrypto RSA', function () {
           cRSA.signRSA(TEST_MESSAGE, key.privateKey)
             .then(sig => {
               should.exist(sig, 'Signature does not exist')
-              chai.expect(sig.length).to.not.equal(0, "Has empty signature value")
+              chai.expect(sig.length).to.not.equal(0, 'Has empty signature value')
               return cRSA.verifRSA(key.publicKey, sig, TEST_MESSAGE)
             })
             .then(v => {
-              chai.expect(v).to.be.equal(true, "Signature is not valid")
+              chai.expect(v).to.be.equal(true, 'Signature is not valid')
             })
             .then(done, done)
         })
       })
   })
-  context("Export/Import", () => {
-
-    // Keys
-    keys.forEach(key => {
-      // Format
-      // TODO add format : "spki", "pkcs8"
-      ["jwk"].forEach(format => {
-        it(`${format}\t${key.name}`, done => {
-          var promise = Promise.resolve()
-          // Check public and private keys
-          [key.privateKey, key.publicKey].forEach(_key => {
-            if ((format === "spki" && _key.type === "public") || (format === "pkcs8" && _key.type === "private") || format === "jwk")
-              promise = promise.then(() => {
-                return webcrypto.subtle.exportKey(format, _key)
-                  .then(jwk => {
-                    assert.equal(!!jwk, true, "Has no jwk value")
-                    // TODO assert JWK params
-                    return webcrypto.subtle.importKey(format, jwk, _key.algorithm, true, _key.usages)
-                  })
-              })
-                .then(k => {
-                  assert.equal(!!k, true, "Imported key is empty")
-                  checkAlgorithms(_key.algorithm, k.algorithm)
-                })
-          })
-          promise.then(done, done)
-        })
-      })
+  context('Export/Import', () => {
+    // TODO add format : "spki", "pkcs8"
+    it(`jwk\t RSA-PSS`, done => {
+      let cRSA = new RSA({ name: 'RSA-PSS' })
+      cRSA.genRSAKeyPair()
+        .then(keyPair => {
+          cRSA.exportRSAPubKeyRaw(keyPair.publicKey, 'jwk')
+            .then(jwk => {
+              should.exist(jwk, 'Has no jwk value')
+              // TODO assert JWK params
+              return cRSA.importRSAPubKeyRaw(jwk, 'RSA-PSS', 'SHA-256')
+            })
+            .then(k => {
+              should.exist(k, 'Has no jwk value')
+              // chai.expect(sig.length).to.not.equal(0, 'Has empty signature value')
+            })
+        }).then(done, done)
     })
   })
 })
