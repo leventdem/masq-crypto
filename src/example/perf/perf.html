@@ -22,11 +22,18 @@ tr
 <!-- <script type="text/javascript" src="dist/crypto.min.js"></script> -->
 </head>
 <body >
-  <h1>Crypto</h1>
-  <h2> <a href="./test/index.html">Go to the test page</a></h2>
-  <h2> <a href="./src/example/pfs.html">Go to the PFS demo</a></h2>
-  <h2> <a href="./src/example/perf/perf.html">Go to the ECDSA and RSA-PSS performance comparison</a></h2>
-
-
+  <h1>Perf comparison</h1>
+  <table>
+    <tr>
+        <th>RSA-PSS sign/verify:</th>
+    </tr>
+    <tr>
+        <button type="button" id="rsaPerf">Run Test</button>
+    </tr>
+    <tr>
+        <th>ECDSA sign/verify:</th>
+    </tr>
+    </table>
+    <script type="text/javascript" src="../../../dist/MasqCrypto.js"></script>
 </body>
 </html>

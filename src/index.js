@@ -493,7 +493,52 @@ document.addEventListener('DOMContentLoaded', function () {
       startECDH()
     })
   }
+
+  // test perf
+  el = document.getElementById('rsaPerf')
+  if (el) {
+    el.addEventListener('click', function (e) {
+      startTestPerf()
+    })
+  }
 })
+
+const singleTestRSA = (keyPair, msg) => {
+  let cRSA = new RSA({ name: 'RSA-PSS' })
+  return cRSA.signRSA(msg, keyPair.privateKey)
+    .then(sig => cRSA.verifRSA(keyPair.publicKey, sig, msg))
+    .then(v => {
+      if (!v) {
+        console.log('Test wrong')
+      }
+      return v
+    })
+}
+
+const callRSATest = (counter, keyPair, msg) => {
+  singleTestRSA(keyPair, msg).then(result => {
+    if (counter > 0) { callRSATest(counter - 1, keyPair, msg) }
+    else {
+      let end = new Date().getTime()
+      let time = end - start
+      console.log('RSA test finished : time is '+time + ' ms.')
+    }
+  })
+}
+
+let start = null
+const startTestPerf = () => {
+  var TEST_MESSAGE = utils.toArray('1234567890123456')
+  let cRSA = new RSA({ name: 'RSA-PSS' })
+  cRSA.genRSAKeyPair()
+    .then((keyPair) => {
+      console.log('RSA-PSS test starts')
+      let testNumber = 100
+      console.log('Number of sign/verif : ' + testNumber)
+      start = new Date().getTime()
+      callRSATest(testNumber, keyPair, TEST_MESSAGE)
+    })
+}
 
 const startECDH = () => {
   log('*** ', clientId, ' : generates a new EC key pair for a single message encryption. ***')
@@ -603,7 +648,6 @@ const aesCTR = () => {
 }
 
 const ecdh = () => {
-
   const aliceEC = new EC({})
   const bobEC = new EC({})
 
@@ -647,4 +691,4 @@ const ecdh = () => {
     .catch(err => console.log(err))
 }
 
-//ecdh()
+// ecdh()
