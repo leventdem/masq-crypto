@@ -498,7 +498,13 @@ document.addEventListener('DOMContentLoaded', function () {
   el = document.getElementById('rsaPerf')
   if (el) {
     el.addEventListener('click', function (e) {
-      startTestPerf()
+      startTestPerfRSA()
+    })
+  }
+  el = document.getElementById('ecPerf')
+  if (el) {
+    el.addEventListener('click', function (e) {
+      startTestPerfEC()
     })
   }
 })
@@ -507,6 +513,17 @@ const singleTestRSA = (keyPair, msg) => {
   let cRSA = new RSA({ name: 'RSA-PSS' })
   return cRSA.signRSA(msg, keyPair.privateKey)
     .then(sig => cRSA.verifRSA(keyPair.publicKey, sig, msg))
+    .then(v => {
+      if (!v) {
+        console.log('Test wrong')
+      }
+      return v
+    })
+}
+const singleTestEC = (keyPair, msg) => {
+  let cEC = new EC({ name: 'ECDSA' })
+  return cEC.signEC(msg, keyPair.privateKey)
+    .then(sig => cEC.verifEC(keyPair.publicKey, sig, msg))
     .then(v => {
       if (!v) {
         console.log('Test wrong')
@@ -525,9 +542,19 @@ const callRSATest = (counter, keyPair, msg) => {
     }
   })
 }
+const callECTest = (counter, keyPair, msg) => {
+  singleTestEC(keyPair, msg).then(result => {
+    if (counter > 0) { callECTest(counter - 1, keyPair, msg) }
+    else {
+      let end = new Date().getTime()
+      let time = end - start
+      console.log('EC test finished : time is '+time + ' ms.')
+    }
+  })
+}
 
 let start = null
-const startTestPerf = () => {
+const startTestPerfRSA = () => {
   var TEST_MESSAGE = utils.toArray('1234567890123456')
   let cRSA = new RSA({ name: 'RSA-PSS' })
   cRSA.genRSAKeyPair()
@@ -537,6 +564,19 @@ const startTestPerf = () => {
       console.log('Number of sign/verif : ' + testNumber)
       start = new Date().getTime()
       callRSATest(testNumber, keyPair, TEST_MESSAGE)
+    })
+}
+
+const startTestPerfEC = () => {
+  var TEST_MESSAGE = utils.toArray('1234567890123456')
+  let cRSA = new EC({ name: 'ECDSA' })
+  cRSA.genECKeyPair()
+    .then((keyPair) => {
+      console.log('ECDSA test starts')
+      let testNumber = 100
+      console.log('Number of sign/verif : ' + testNumber)
+      start = new Date().getTime()
+      callECTest(testNumber, keyPair, TEST_MESSAGE)
     })
 }
 
