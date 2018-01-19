@@ -78,13 +78,13 @@ const hexStringToBuffer = (hexString) => {
  * @param {string} passPhrase The passphrase that is used to derive the key
  * @returns {Promise}   A promise that contains the derived key
  */
-const deriveKey = (passPhrase = '', keyLenth = 18, iterations = 10000) => {
+const deriveKey = (passPhrase = '', salt, keyLenth = 18, iterations = 10000) => {
   if (passPhrase.length === 0) {
     passPhrase = randomString(keyLenth)
   }
 
   // TODO: set this to a real value later
-  let salt = new Uint8Array('')
+  let _salt = salt || toArray('theSalt')
 
   return crypto.subtle.importKey(
     'raw',
@@ -96,14 +96,12 @@ const deriveKey = (passPhrase = '', keyLenth = 18, iterations = 10000) => {
     .then(baseKey => {
       return crypto.subtle.deriveBits({
         name: 'PBKDF2',
-        salt: salt,
+        salt: _salt,
         iterations: iterations,
         hash: 'sha-256'
       }, baseKey, 128)
     })
-    .then(function (derivedKey) {
-      return new Uint8Array(derivedKey)
-    })
+    .then(derivedKey => new Uint8Array(derivedKey))
     .catch(err => console.log(err))
 }
 
