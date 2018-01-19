@@ -288,4 +288,4 @@ class AES {
   }
 }
 export default AES
-export { aesModes }
+export { aesModes, AES }

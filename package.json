@@ -4,9 +4,10 @@
   "description": "Crypto wrapper for Masq",
   "main": "src/index.js",
   "scripts": {
-    "clean": "rm  dist/crypto.js dist/index.js dist/AES.js dist/utils.js dist/EC.js dist/RSA.js ",
-    "build": "./node_modules/.bin/babel ./src --experimental -d ./dist && browserify ./dist/index.js --standalone masqCrypto > dist/masqCrypto.js && npm run clean",
-    "minify": "npm run build && uglifyjs ./dist/masqCrypto.js -o ./dist/masqCrypto.min.js --compress --mangle -- ",
+    "test": " ./node_modules/.bin/babel ./test --experimental -d ./browser_test && browserify ./browser_test/test01.js",
+    "clean": "rm  dist/index.js dist/AES.js dist/utils.js dist/EC.js dist/RSA.js ",
+    "build": "./node_modules/.bin/babel ./src --experimental -d ./dist && browserify ./dist/index.js --standalone MasqCrypto > dist/MasqCrypto.js && npm run clean",
+    "minify": "npm run build && uglifyjs ./dist/MasqCrypto.js -o ./dist/MasqCrypto.min.js --compress --mangle -- ",
     "dist": "npm run minify",
     "start": "npm run dist && http-server ."
   },
@@ -25,13 +26,12 @@
     "type": "git",
     "url": "https://github.com/QwantResearch/masq-crypto.git"
   },
-  "dependencies": {
-    "localforage": "^1.5.5"
-  },
+  "dependencies": {},
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "browserify": "^14.5.0",
+    "chai": "^4.1.2",
     "eslint": "^4.13.1",
     "eslint-config-standard": "^11.0.0-beta.0",
     "eslint-plugin-import": "^2.8.0",
@@ -40,6 +40,7 @@
     "eslint-plugin-react": "^7.5.1",
     "eslint-plugin-standard": "^3.0.1",
     "http-server": "^0.10.0",
+    "mocha": "^4.1.0",
     "uglify-js": "^3.1.10"
   }
 }

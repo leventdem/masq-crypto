@@ -74,9 +74,9 @@ class RSA {
    * Verif data (e.g. raw EC public key in case of ECDH)
    *
    * @param {CryptoKey} publicKey - The public RSA Key used to verify data signature
-   * @param {arrayBuffer} signature - The data signature
+   * @param {arrayBuffer} signature - The signature
    * @param {arrayBuffer} signedData - Signed data
-   * @returns {arrayBuffer} - The signature
+   * @returns {boolean} - Result
    */
   verifRSA(publicKey, signature, signedData) {
     return crypto.subtle.verify({
@@ -90,6 +90,7 @@ class RSA {
    * RSA private key is already stored in RSA.privateKey
    *
    * @param {arrayBuffer} data - The data to be signed
+   * @param {CryptoKey} privateKey - The private key (if nt sotred in RSA class)
    * @returns {arrayBuffer} - The signature
    */
   signRSA(data, privateKey) {
@@ -119,7 +120,7 @@ class RSA {
     }, {
         name: name || 'RSA-PSS',
         hash: {
-          name: hash || 'SHA-256'
+          name: hash || 'SHA-256'
         }
       }, false, ['verify'])
   }
@@ -135,3 +136,4 @@ class RSA {
   }
 }
 export default RSA
+export {RSA}

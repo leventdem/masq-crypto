@@ -159,10 +159,10 @@ class EC {
    * @param {String} curve - The elliptic curve used at the imported key creation
    * @returns {Promise} - The CryptoKey
    */
-  importKeyRaw(key, curve = 'P-256', algName = 'ECDH') {
+  importKeyRaw(key, curve, algName) {
     return crypto.subtle.importKey('raw', key, {
-      name: algName,
-      namedCurve: curve
+      name: algName || this.name,
+      namedCurve: curve || this.curve
     }, true, [])
   }
 
@@ -201,3 +201,4 @@ class EC {
   }
 }
 export default EC
+export {EC}

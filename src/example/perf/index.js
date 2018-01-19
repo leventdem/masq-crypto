@@ -1,96 +1,98 @@
-import AES, { aesModes } from '../../AES'
-import EC from '../../EC'
-import RSA from '../../RSA'
-import * as utils from '../../utils'
-import assert from 'assert'
-
-const apiData = {
-  POI_1: 'Tour eiffel',
-  POI_2: 'Bastille',
-  POI_3: 'Cafeteria'
-}
-
-/**
- * Print error messages
- *
- * @param {Error} err Error message
+/*
+ * User interface :
+ * Event and button : only for demo purpose
  */
-const logFail = (err) => {
-  console.log(err)
+
+document.addEventListener('DOMContentLoaded', function () {
+  var el = null
+  // test perf
+  el = document.getElementById('rsaPerf')
+  if (el) {
+    el.addEventListener('click', function (e) {
+      startTestPerfRSA()
+    })
+  }
+  el = document.getElementById('ecPerf')
+  if (el) {
+    el.addEventListener('click', function (e) {
+      startTestPerfEC()
+    })
+  }
+})
+
+const delay = (ms) => {
+  return new Promise(function (resolve, reject) {
+    setTimeout(resolve, ms) // (A)
+  })
 }
 
-const aesCTR = () => {
-  // EXAMPLE
-  const data = {
-    POI_1: 'Tour eiffel',
-    POI_2: 'Bastille',
-    POI_3: 'Cafeteria'
-  }
+const singleTestRSA = (keyPair, msg) => {
+  let cRSA = new MasqCrypto.RSA({ name: 'RSA-PSS' })
+  return cRSA.signRSA(msg, keyPair.privateKey)
+    .then(sig => cRSA.verifRSA(keyPair.publicKey, sig, msg))
+    .then(v => {
+      if (!v) {
+        console.log('Test wrong')
+      }
+      return v
+    })
+}
+const singleTestEC = (keyPair, msg) => {
+  let cEC = new MasqCrypto.EC({ name: 'ECDSA' })
+  return cEC.signEC(msg, keyPair.privateKey)
+    .then(sig => cEC.verifEC(keyPair.publicKey, sig, msg))
+    .then(v => {
+      if (!v) {
+        console.log('Test wrong')
+      }
+      return v
+    })
+}
 
-  // We generate a 128 bits key with crypto random
-  const AESKey = window.crypto.getRandomValues(new Uint8Array(16))
-  // We create an AES object with some paramters
-  const myAES = new AES(
-    {
-      mode: aesModes.CTR,
-      key: AESKey,
-      keySize: 128
+const callRSATest = (counter, keyPair, msg) => {
+  singleTestRSA(keyPair, msg).then(result => {
+    if (counter > 0) { callRSATest(counter - 1, keyPair, msg) }
+    else {
+      let end = new Date().getTime()
+      let time = end - start
+      console.log('RSA test finished : time is ' + time + ' ms.')
     }
-  )
-  console.log(myAES)
-  myAES.encrypt(JSON.stringify(data))
-    .then(encryptedJSON => {
-      console.log(encryptedJSON)
-      return myAES.decrypt(encryptedJSON)
-    })
-    .then(decryptedJSON => console.log(decryptedJSON))
-    .catch(err => console.log(err))
+  })
+}
+const callECTest = (counter, keyPair, msg) => {
+  singleTestEC(keyPair, msg).then(result => {
+    if (counter > 0) { callECTest(counter - 1, keyPair, msg) }
+    else {
+      let end = new Date().getTime()
+      let time = end - start
+      console.log('EC test finished : time is ' + time + ' ms.')
+    }
+  })
 }
 
-const ecdh = () => {
-
-  const aliceEC = new EC({})
-  const bobEC = new EC({})
-
-  const generateECKeys = () => {
-    console.log('Generation of ephemeral EC keys for Alice and Bob')
-    return Promise.all([aliceEC.genECKeyPair(), bobEC.genECKeyPair({})])
-  }
-
-  const exportRawKeys = () => {
-    console.log('Extraction of raw EC public keys for Alice and Bob')
-    return Promise.all([bobEC.exportKeyRaw(), aliceEC.exportKeyRaw()])
-  }
-
-  // Used to store the raw EC public Keys
-  const alice = {}
-  const bob = {}
-
-  console.log('Start test')
-
-  generateECKeys()
-    .then(exportRawKeys)
-    .then(rawKeys => {
-      bob.ECRawPubKey = rawKeys[0]
-      alice.ECRawPubKey = rawKeys[1]
-      return bobEC.importKeyRaw(alice.ECRawPubKey)
+let start = null
+const startTestPerfRSA = () => {
+  var TEST_MESSAGE = MasqCrypto.utils.toArray('1234567890123456')
+  let cRSA = new MasqCrypto.RSA({ name: 'RSA-PSS' })
+  cRSA.genRSAKeyPair()
+    .then((keyPair) => {
+      console.log('RSA-PSS test starts')
+      let testNumber = 100
+      console.log('Number of sign/verif : ' + testNumber)
+      start = new Date().getTime()
+      callRSATest(testNumber, keyPair, TEST_MESSAGE)
     })
-    .then(AliceECPubKey => {
-      console.log('Bob : public key verification :  ok')
-      // Bob : with Alice Public EC key and his EC private key, we derive a symmetric key
-      console.log("Bob derives a symmetric key with Alice's Public EC key and his EC private key ")
-      return bobEC.deriveKeyECDH(AliceECPubKey, 'aes-gcm', 128)
-    })
-    .then(derivedSymmetricAESKeyBob => {
-      aliceEC.importKeyRaw(bob.ECRawPubKey).then(BobECPubKey => {
-        aliceEC.deriveKeyECDH(BobECPubKey, 'aes-gcm', 128).then(derivedSymmetricAESKeyAlice => {
-          console.log(derivedSymmetricAESKeyAlice)
-          console.log(derivedSymmetricAESKeyBob)
-        }).catch(err => console.log(err))
-      }).catch(err => console.log(err))
-    })
-    .catch(err => console.log(err))
 }
 
-//ecdh()
-aesCTR()
+const startTestPerfEC = () => {
+  var TEST_MESSAGE = MasqCrypto.utils.toArray('1234567890123456')
+  let cRSA = new MasqCrypto.EC({ name: 'ECDSA' })
+  cRSA.genECKeyPair()
+    .then((keyPair) => {
+      console.log('ECDSA test starts')
+      let testNumber = 100
+      console.log('Number of sign/verif : ' + testNumber)
+      start = new Date().getTime()
+      callECTest(testNumber, keyPair, TEST_MESSAGE)
+    })
+}
