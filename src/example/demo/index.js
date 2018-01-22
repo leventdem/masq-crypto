@@ -148,7 +148,7 @@ const generatePassPhrase = () => {
 const derive = () => {
   let iterations = 10000
   console.log('PBKDF2 demo : ')
-  MasqCrypto.utils.deriveKey(passPhrase, MasqCrypto.utils.toArray('theSalt'), passPhrase.length, iterations)
+  MasqCrypto.utils.deriveKey(passPhrase,MasqCrypto.utils.toArray('theSalt'), iterations)
     .then(derivedKey => {
       console.log('Salt : ', MasqCrypto.utils.toArray('theSalt'))
       console.log('Iterations : ', iterations)

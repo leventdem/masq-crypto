@@ -17,13 +17,14 @@ describe('MasqCrypto utils', function () {
     })
   })
   context('Key derivation and passphrase generation', () => {
-    it('Generate a random string [a-zA-Z0-9]', () => {
-      let str = utils.randomString()
+    let str = ''
+    it('Generate a random string [a-zA-Z0-9] and derive', () => {
+      str = utils.randomString()
       chai.assert.typeOf(str, 'string', 'str is a string')
       chai.assert.lengthOf(str, 18, 'Default length is 18')
     })
-    it('Key derivation PBKDF2, default values, empty passphrase', done => {
-      utils.deriveKey('')
+    it('Key derivation PBKDF2, passphrase as string, no salt and default iteration numbers', done => {
+      utils.deriveKey(str)
         .then(derivedKey => {
           should.exist(derivedKey, 'derivedKey is empty')
           chai.assert.lengthOf(derivedKey, 16, 'Default length is 16 bytes (128 bits)')
@@ -31,7 +32,25 @@ describe('MasqCrypto utils', function () {
         })
         .then(done, done)
     })
-    it('Key derivation PBKDF2, default values but a passphrase', done => {
+    it('Key derivation PBKDF2, passphrase as Uint8Array, no salt and default iteration numbers', done => {
+      utils.deriveKey(utils.toArray(str))
+        .then(derivedKey => {
+          should.exist(derivedKey, 'derivedKey is empty')
+          chai.assert.lengthOf(derivedKey, 16, 'Default length is 16 bytes (128 bits)')
+          chai.assert(derivedKey instanceof Uint8Array, true, 'DerivedKey is not an array');
+        })
+        .then(done, done)
+    })
+    it('Key derivation PBKDF2, passphrase as Uint8Array, salt and default iteration numbers', done => {
+      utils.deriveKey(utils.toArray(str), utils.toArray('theSalt'))
+        .then(derivedKey => {
+          should.exist(derivedKey, 'derivedKey is empty')
+          chai.assert.lengthOf(derivedKey, 16, 'Default length is 16 bytes (128 bits)')
+          chai.assert(derivedKey instanceof Uint8Array, true, 'DerivedKey is not an array');
+        })
+        .then(done, done)
+    }) 
+    it('Key derivation PBKDF2, check derived key value', done => {
       utils.deriveKey('myPassphrase')
         .then(derivedKey => {
           let derivedKeyHexStr = utils.bufferToHexString(derivedKey)
