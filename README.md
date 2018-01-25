@@ -41,7 +41,19 @@ the key pair will be loaded from storage.
 is used to sign and verify the EC public key during ECDHE.
 5) Click on **Start ECDH** to send a message.
 
-**NOTE:** You can find see all the communications between Alice and bob in the console log.
+**NOTE:** You can see all the communications steps between Alice and Bob in the console log.
+
+## Demo page
+
+In this page, the main cryptographic operations are presented :
+- AES operations
+- RSA
+- ECDH
+
+## Performance comparison between ECDSA and RSA-PSS signature
+The question of choosing either ECDSA or RSA-PSS could be asked, as a indicator we have implemented 
+a small test by signing and verifying a message a hundred times. 
+Please specify the same "strength" between both ciphers, i.e. modulus length, hash name for RSA-PSS or elliptic curve for ECDSA. 
 
 # Example usage
 
