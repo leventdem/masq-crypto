@@ -1,6 +1,7 @@
 # Masq Crypto Library
 
 [![](https://img.shields.io/badge/project-Masq-7C4DFF.svg?style=flat-square)](https://github.com/QwantResearch/masq-store)
+[![](https://api.travis-ci.org/QwantResearch/masq-crypto.svg)](https://travis-ci.org/QwantResearch/masq-crypto)
 
 ![Masq Logo](https://i.imgur.com/qZ3dq0Q.png)
 
