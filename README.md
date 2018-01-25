@@ -128,19 +128,18 @@ const cipherAES = new MasqCrypto.AES(
 In order to provide Perfect Forward Secrecy, we implement ECDHE.
 We follow this pattern (for the example) for now : ECDHE-RSA-AES128-GCM-SHA256
 Where :
-- Authentication is provided with RSA-PSS signature and verification (EC public keys are signed during exchange)
-- Encryption is based on the cipher AES-GCM (which provide confidentiality and integrity)
-- The derived AES-GCM symmetric key is used only one time for now
+- Authentication is provided with RSA-PSS signature and verification (EC public keys are signed during exchange),
+- Encryption is based on the cipher AES-GCM (which provides both confidentiality and integrity);
+- The derived AES-GCM symmetric key is used only one time.
 
 In this example, we illustrate a communication between two users : Alice and Bob. 
 Here are the steps :
-1) Generation of long-term RSA-PSS key pairs (the exchange of the corresponding public keys is out of the scope, this exchange can be done through QR-code)
-2) If we want to exhange data, we first generate a ephemeral EC key pairs for each users
-3) Each EC public key is signed with the user RSA private key and send over an (unsecured) channel to the other user
-4) Each user verifies the received EC public key 
-5) If both verification is ok, they derived a common symmetric key with the received EC public key and their own private EC key.
-6) They encrypt data with the derived symmetric key with AES-GCM cipher.
-
+1) Generation of long-term RSA-PSS key pairs (the exchange of the corresponding public keys is out of the scope).
+2) Before sending data, we first generate a ephemeral EC key pairs for each user.
+3) Each EC public key is signed with the other user's RSA private key and sent over an (unsecured) channel.
+4) Each user verifies the received EC public key.
+5) If both verifications are succesful, Alice and Bob derive a common AES-GCM symmetric key using the received EC public key and their own private EC key.
+6) Finally, they encrypt/decrypt data with the derived symmetric key.
 
 ```JavaScript
 const aliceEC = new MasqCrypto.EC({})
