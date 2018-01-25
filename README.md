@@ -50,7 +50,7 @@ In this page, the main cryptographic operations are presented :
 - RSA
 - ECDH
 
-## Performance comparison between ECDSA and RSA-PSS signature
+## Performance comparison between ECDSA and RSA-PSS signature
 The question of choosing either ECDSA or RSA-PSS could be asked, as a indicator we have implemented 
 a small test by signing and verifying a message a hundred times. 
 Please specify the same "strength" between both ciphers, i.e. modulus length, hash name for RSA-PSS or elliptic curve for ECDSA. 
