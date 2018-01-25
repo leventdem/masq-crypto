@@ -73,7 +73,7 @@ const callECTest = (counter, keyPair, msg) => {
 let start = null
 const startTestPerfRSA = () => {
   var TEST_MESSAGE = MasqCrypto.utils.toArray('1234567890123456')
-  let cRSA = new MasqCrypto.RSA({ name: 'RSA-PSS' })
+  let cRSA = new MasqCrypto.RSA({ name: 'RSA-PSS', modulusLength: 4096 })
   cRSA.genRSAKeyPair()
     .then((keyPair) => {
       console.log('RSA-PSS test starts')
@@ -86,7 +86,7 @@ const startTestPerfRSA = () => {
 
 const startTestPerfEC = () => {
   var TEST_MESSAGE = MasqCrypto.utils.toArray('1234567890123456')
-  let cRSA = new MasqCrypto.EC({ name: 'ECDSA' })
+  let cRSA = new MasqCrypto.EC({ name: 'ECDSA', curve: "P-521" })
   cRSA.genECKeyPair()
     .then((keyPair) => {
       console.log('ECDSA test starts')
