@@ -21,6 +21,27 @@ git clone https://github.com/QwantResearch/masq-crypto.git
 cd masq-crypto
 npm install
 ```
+# Demo
+In the main html page, the user has access to 4 different pages. 
+
+## A test page
+This page is used to check if eveything works well on the browser. It checks the main cryptographic functionalities.
+
+## A Perfect Forward PFS demo
+A web socket based PFD demo is performed on this page. 
+
+On two browsers, follow those steps :
+
+1) Open the demo page (masq-crypto/src/example/pfs/pfs.html).
+2) Choose a username : alice and bob (if you choose exactly those names a confirmation message will 
+appear below each user's picture when RSA keys are loaded).
+3) Click on **Init** button, the first time a RSA key pair will be generated and stored on indexeddb. Next times, 
+the key pair will be loaded from storage.
+4) Click on **Request RSA public Key** in order to receive the other user's RSA public key. This key
+is used to sign and verify the EC public key during ECDHE.
+5) Click on **Start ECDH** to send a message.
+
+**NOTE:** You can find see all the communications between Alice and bob in the console log.
 
 # Example usage
 
