@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Crypto lib for Masq ---</title>
+<style>
+table, tr, th
+ {
+     font-weight: normal;
+ }
+tr
+{
+    text-align: left;
+}
+.th1
+{
+    overflow: hidden;
+    white-space: nowrap;
+}
+</style>
+
+
+<!-- <script type="text/javascript" src="dist/crypto.min.js"></script> -->
+</head>
+<body >
+  <h1>Perf comparison</h1>
+  <table>
+    <tr>
+        <th>RSA-PSS sign/verify:</th>
+        <th> <button type="button" id="rsaPerf">Run Test</button></th>
+    </tr>
+    <tr>
+        <th>ECDSA sign/verify:</th>
+        <th> <button type="button" id="ecPerf">Run Test</button></th>
+    </tr>
+    </table>
+    
+    <script type="text/javascript" src="../../../dist/MasqCrypto.js"></script>
+    <script type="text/javascript" src="../../../dist/example/perf/index.js"></script>
+</body>
+</html>

@@ -4,9 +4,10 @@
   "description": "Crypto wrapper for Masq",
   "main": "src/index.js",
   "scripts": {
-    "clean": "rm dist/index.js",
-    "build": "./node_modules/.bin/babel ./src --experimental -d ./dist && browserify ./dist/index.js --standalone CryptoMasq > dist/crypto.js && npm run clean",
-    "minify": "npm run build && uglifyjs ./dist/crypto.js -o ./dist/crypto.min.js --compress --mangle -- ",
+    "test": "./node_modules/.bin/mocha-headless-chrome -f ./test/index.html -a no-sandbox -a disable-setuid-sandbox",
+    "clean": "rm  dist/index.js dist/AES.js dist/utils.js dist/EC.js dist/RSA.js ",
+    "build": "./node_modules/.bin/babel ./src --experimental -d ./dist && browserify ./dist/index.js --standalone MasqCrypto > dist/MasqCrypto.js && npm run clean",
+    "minify": "npm run build && uglifyjs ./dist/MasqCrypto.js -o ./dist/MasqCrypto.min.js --compress --mangle -- ",
     "dist": "npm run minify",
     "start": "npm run dist && http-server ."
   },
@@ -30,7 +31,17 @@
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "browserify": "^14.5.0",
+    "chai": "^4.1.2",
+    "eslint": "^4.13.1",
+    "eslint-config-standard": "^11.0.0-beta.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-react": "^7.5.1",
+    "eslint-plugin-standard": "^3.0.1",
     "http-server": "^0.10.0",
+    "mocha": "^4.1.0",
+    "mocha-headless-chrome": "^1.8.2",
     "uglify-js": "^3.1.10"
   }
 }

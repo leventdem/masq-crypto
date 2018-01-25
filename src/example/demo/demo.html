@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Crypto lib for Masq ---</title>
+<style>
+table, tr, th
+ {
+     font-weight: normal;
+ }
+tr
+{
+    text-align: left;
+}
+.th1
+{
+    overflow: hidden;
+    white-space: nowrap;
+}
+</style>
+
+
+<!-- <script type="text/javascript" src="dist/crypto.min.js"></script> -->
+</head>
+<body >
+  <h1>Aes test</h1>
+  <table>
+    <tr>
+        <th>AES-GCM :</th>
+        <th> <button type="button" id="aesGCM">Run AES-GCM demo</button></th>
+    </tr>
+    <tr>
+        <th>AES-CBC :</th>
+        <th> <button type="button" id="aesCBC">Run AES-CBC demo</button></th>
+    </tr>
+    <tr>
+        <th>AES-CTR :</th>
+        <th> <button type="button" id="aesCTR">Run AES-CTR demo</button></th>
+    </tr>
+    </table>
+    <h1>PBKDF2 :</h1>
+    <table>
+      <tr>
+          <th>Generate a passphrase (18 chars default) and derive :</th>
+          <th> <button type="button" id="generatePassPhrase">Go</button></th>
+      </tr>
+      <tr>
+          <th>Derive passphrase :</th>
+          <th> <button type="button" id="derive">Go</button></th>
+      </tr>
+      </table>
+      <h1>ECDH :</h1>
+      <table>
+        <tr>
+            <th>ECDH without EC public keys verification (with RSA-PSS or ECDSA) :</th>
+            <th> <button type="button" id="ecdh">Go</button></th>
+        </tr>
+        </table>
+        <p>A full demo of ECDH with EC public key verification is available in <a href="../pfs/pfs.html">PFS demo</a> (Perfect Forward Secrecy)</p>
+        <p>A performance comparison between ECDSA and RSA-PSS is performed in this <a href="../perf/perf.html">page</a>.  </p>
+<br/>
+    <p>Results : open the console (CTRL + shift + i)</p>
+    
+    <script type="text/javascript" src="../../../dist/MasqCrypto.js"></script>
+    <script type="text/javascript" src="../../../dist/example/demo/index.js"></script>
+</body>
+</html>
