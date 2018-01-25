@@ -162,8 +162,8 @@ const cipherAES = new MasqCrypto.AES(
 
 ## ECDHE example :
 
-In order to provide Perfect Forward Secrecy, we have implemented ECDHE.
-For this demo we are using the following scheme : ECDHE-RSA-AES128-GCM-SHA256, where :
+For the sake of simplicty, besides the web socket demo page, here the one page ECDHE demo is presented.
+We are using the following cipher suite : ECDHE-RSA-AES128-GCM-SHA256, where :
 - Authentication is provided with RSA-PSS signature and verification (EC public keys are signed during exchange),
 - Encryption relies on the cipher AES-GCM (which provides both confidentiality and integrity);
 - The derived AES-GCM symmetric key is used only one time.
@@ -178,8 +178,18 @@ Here are the steps :
 6) Finally, they encrypt/decrypt data with the derived symmetric key.
 
 ```JavaScript
-const aliceEC = new MasqCrypto.EC({})
-  const bobEC = new MasqCrypto.EC({})
+const aliceEC = new MasqCrypto.EC(
+ {
+    name: 'ECDH',
+    curve: 'P-256'
+  }
+)
+const bobEC = new MasqCrypto.EC(
+ {
+    name: 'ECDH',
+    curve: 'P-256'
+  }
+)
 
   const generateECKeys = () => {
     console.log('Generation of ephemeral EC keys for Alice and Bob')
