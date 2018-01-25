@@ -25,7 +25,11 @@ npm install
 In the main html page, the user has access to 4 different pages. 
 
 ## A test page
-This page is used to check if eveything works well on the browser. It checks the main cryptographic functionalities.
+This page checks the main cryptographic functionalities. A terminal version is available by running :
+```bash
+npm test
+```
+
 
 ## A Perfect Forward PFS demo
 A web socket based PFD demo is performed on this page. 
@@ -52,8 +56,8 @@ In this page, the main cryptographic operations are presented :
 
 ## Performance comparison between ECDSA and RSA-PSS signature
 The question of choosing either ECDSA or RSA-PSS could be asked, as a indicator we have implemented 
-a small test by signing and verifying a message a hundred times. 
-Please specify the same "strength" between both ciphers, i.e. modulus length, hash name for RSA-PSS or elliptic curve for ECDSA. 
+a small performance test by signing and verifying a message a hundred times. 
+Please specify the same "strength" between both ciphers, i.e. modulus length, hash name for RSA-PSS and elliptic curve for ECDSA. 
 
 # Example usage
 
@@ -158,11 +162,10 @@ const cipherAES = new MasqCrypto.AES(
 
 ## ECDHE example :
 
-In order to provide Perfect Forward Secrecy, we implement ECDHE.
-We follow this pattern (for the example) for now : ECDHE-RSA-AES128-GCM-SHA256
-Where :
+In order to provide Perfect Forward Secrecy, we have implemented ECDHE.
+For this demo we are using the following scheme : ECDHE-RSA-AES128-GCM-SHA256, where :
 - Authentication is provided with RSA-PSS signature and verification (EC public keys are signed during exchange),
-- Encryption is based on the cipher AES-GCM (which provides both confidentiality and integrity);
+- Encryption relies on the cipher AES-GCM (which provides both confidentiality and integrity);
 - The derived AES-GCM symmetric key is used only one time.
 
 In this example, we illustrate a communication between two users : Alice and Bob. 
