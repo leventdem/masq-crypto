@@ -49,8 +49,8 @@ class RSA {
   /**
    * Generate a RSA-PSS key pair for signature and verification
    *
-   * @param {int} modulusLength Chosen modulus length (1024, 2048 or 4096)
-   * @returns {Promise} RSA key pair : publicKey and privateKey
+   * @param {int} modulusLength - The modulus length (1024, 2048 or 4096)
+   * @returns {Promise} - The RSA key pair : publicKey and privateKey
    */
   genRSAKeyPair(modulusLength = 4096) {
     let self = this
@@ -126,10 +126,10 @@ class RSA {
   }
 
   /**
-   * Export RSA-PSS public key
+   * Export RSA-PSS public raw key
    *
-   * @param {CryptoKey} key The key that we extract raw value
-   * @returns {Promise} The raw key
+   * @param {CryptoKey} key - The key that we extract raw value
+   * @returns {Promise} - The raw key
    */
   exportRSAPubKeyRaw(key, format) {
     return crypto.subtle.exportKey(format || 'jwk', key || this.publicKey)

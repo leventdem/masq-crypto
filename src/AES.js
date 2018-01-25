@@ -64,11 +64,11 @@ const encryptBuffer = (data, key, cipherContext) => {
  * AES cipher
  * @constructor
  * @param {Object} params - The AES cipher parameters
- * @param {string} params.mode - The encryption mode : aes-gcm, aes-cbc
- * @param {ArrayBuffer} params.key - The AES CryptoKey
- * @param {number} params.keySize - The key size in bits (128, 192, 256)
+ * @param {string} [params.mode] - The encryption mode : aes-gcm, aes-cbc
+ * @param {ArrayBuffer} [params.key] - The AES CryptoKey
+ * @param {number} [params.keySize] - The key size in bits (128, 192, 256)
  * @param {number} [params.iv] - The IV, if not provided it will be generated randomly
- * @param {string} [params.additionalData] - Tee authenticated data, only for aes-gcm mode.
+ * @param {string} [params.additionalData] - The authenticated data, only for aes-gcm mode.
  */
 class AES {
   constructor(params) {
@@ -97,8 +97,8 @@ class AES {
  * Check the received key format (CryptoKey or raw key).
  * If raw, import the key and return the CryptoKey
  *
- * @param {obj} obj - A trick to call another prototype
- * @returns {CryptoKey|arrayBuffer} - The key
+ * @param {obj} obj - Save this in obj
+ * @returns {CryptoKey|arrayBuffer} - The CryptoKey
  */
   checkRaw(obj, key) {
     return new Promise(function (resolve, reject) {
@@ -113,6 +113,12 @@ class AES {
     })
   }
 
+  /**
+  * Transform a raw key into a CryptoKey
+  *
+  * @param {arrayBuffer} key - The key we want to import
+  * @returns {CryptoKey} - The CryptoKey
+  */
   importKeyRaw(key) {
     return crypto.subtle.importKey('raw', key, {
       name: this.mode
@@ -157,6 +163,16 @@ class AES {
     }
   }
 
+  /**
+  * Decrypt the given input. All cipher context infomrmation
+  * have been initialized at object creation (default or parameter)
+  *
+  * @param {object} input - The ciphertext and associated decryption data
+  * @param {hexString} input.ciphertext - The ciphertext
+  * @param {hexString} input.iv - The IV used at encryption
+  * @param {hexString} [input.version] - The additionnal data for aes-gcm mode
+  * @returns {string} - The decrypted input
+  */
   decrypt(input) {
     // Prepare context, all modes have at least one property : ciphertext
     let context = {}
@@ -208,6 +224,14 @@ class AES {
     }
   }
 
+    /**
+  * Eecrypt the given input. All cipher context information
+  * have been initialized at object creation (as default or as parameter)
+  * If the input is an ohas to be stringified
+  *
+  * @param {string} input - The plaintext
+  * @returns {object} - The encrypted input with additional cipher information (e.g. iv)
+  */
   encrypt(input) {
     // all modes have at least the plaintext
     let context = {}
@@ -277,6 +301,7 @@ class AES {
 
   /**
    * Generate an AES key based on the cipher mode and keysize
+   * Cipher mode and keys are initialized at cipher AES instance creation.
    *
    * @returns {CryptoKey} - The generated AES key.
    */

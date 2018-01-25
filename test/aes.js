@@ -1,6 +1,3 @@
-import AES, { aesModes } from '../src/AES.js'
-import * as utils from '../src/utils.js'
-
 // To avoid error on import please specify the default export in the imported class
 // with export default <className> instead of export {className as default}
 
@@ -8,7 +5,7 @@ const should = chai.should()
 
 const keys = []
 
-describe('MasqCrypto AES', function () {
+describe('MasqCrypto AES', () => {
   // EXAMPLE
   let BIG_MESSAGE = ''
   let i = 0
@@ -26,9 +23,9 @@ describe('MasqCrypto AES', function () {
   ]
 
   const KEYS = [
-    { alg: aesModes.GCM },
-    { alg: aesModes.CTR },
-    { alg: aesModes.CBC }
+    { alg: MasqCrypto.aesModes.GCM },
+    { alg: MasqCrypto.aesModes.CTR },
+    { alg: MasqCrypto.aesModes.CBC }
   ]
 
   context('Generate key with AES key generator aka CryptoKey', () => {
@@ -44,7 +41,7 @@ describe('MasqCrypto AES', function () {
         }
         keys.push(keyTemplate)
         it(keyName, done => {
-          let aesKey = new AES(
+          let aesKey = new MasqCrypto.AES(
             {
               mode: key.alg,
               keySize: length
@@ -72,10 +69,10 @@ describe('MasqCrypto AES', function () {
             // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
-                name: aesModes.CBC
+                name: MasqCrypto.aesModes.CBC
               }
               // We create an AES object with some paramters
-              const myAES = new AES(
+              const myAES = new MasqCrypto.AES(
                 {
                   mode: alg.name,
                   key: key.key,
@@ -105,10 +102,10 @@ describe('MasqCrypto AES', function () {
             // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
-                name: aesModes.CTR
+                name: MasqCrypto.aesModes.CTR
               }
               // We create an AES object with some paramters
-              const myAES = new AES(
+              const myAES = new MasqCrypto.AES(
                 {
                   mode: alg.name,
                   key: key.key,
@@ -138,10 +135,10 @@ describe('MasqCrypto AES', function () {
             // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
-                name: aesModes.GCM
+                name: MasqCrypto.aesModes.GCM
               }
               // We create an AES object with some paramters
-              const myAES = new AES(
+              const myAES = new MasqCrypto.AES(
                 {
                   mode: alg.name,
                   key: key.key,
@@ -172,10 +169,10 @@ describe('MasqCrypto AES', function () {
             // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
-                name: aesModes.GCM
+                name: MasqCrypto.aesModes.GCM
               }
               // We create an AES object with some paramters
-              const myAES = new AES(
+              const myAES = new MasqCrypto.AES(
                 {
                   mode: alg.name,
                   key: key.key,
@@ -231,10 +228,10 @@ describe('MasqCrypto AES', function () {
             // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
-                name: aesModes.CBC
+                name: MasqCrypto.aesModes.CBC
               }
               // We create an AES object with some paramters
-              const myAES = new AES(
+              const myAES = new MasqCrypto.AES(
                 {
                   mode: alg.name,
                   key: key.key,
@@ -264,10 +261,10 @@ describe('MasqCrypto AES', function () {
             // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
-                name: aesModes.CTR
+                name: MasqCrypto.aesModes.CTR
               }
               // We create an AES object with some paramters
-              const myAES = new AES(
+              const myAES = new MasqCrypto.AES(
                 {
                   mode: alg.name,
                   key: key.key,
@@ -297,10 +294,10 @@ describe('MasqCrypto AES', function () {
             // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
-                name: aesModes.GCM
+                name: MasqCrypto.aesModes.GCM
               }
               // We create an AES object with some paramters
-              const myAES = new AES(
+              const myAES = new MasqCrypto.AES(
                 {
                   mode: alg.name,
                   key: key.key,
@@ -333,10 +330,10 @@ describe('MasqCrypto AES', function () {
             // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
-                name: aesModes.GCM
+                name: MasqCrypto.aesModes.GCM
               }
               // We create an AES object with some paramters
-              const myAES = new AES(
+              const myAES = new MasqCrypto.AES(
                 {
                   mode: alg.name,
                   key: key.key,

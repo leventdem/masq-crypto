@@ -23,12 +23,12 @@ const acceptedAlgName = [
  * Elliptic Curve
  * @constructor
  * @param {Object} params - The EC cipher parameters
- * @param {string} params.name - The algorithm name used during key generation or derivation
- * @param {string} params.hash - The hash function (sign/verif). Default : "SHA-256", possible values: "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
- * @param {string} params.curve - The elliptic curve ("P-256", "P-384", or "P-521")
+ * @param {string} params.name - The algorithm name ("ECDH" or "ECDSA")
+ * @param {string} [params.hash] - The hash function (sign/verif). Default : "SHA-256", possible values: "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
+ * @param {string} [params.curve] - The elliptic curve ("P-256", "P-384", or "P-521")
  */
 class EC {
-  constructor(params) {
+  constructor (params) {
     this.name = params.name || 'ECDH'
     this.curve = params.curve || 'P-384'
     this.hash = params.hash || 'SHA-256'
@@ -36,11 +36,11 @@ class EC {
     this.privateKey = null
   }
 
-  get curve() {
+  get curve () {
     return this._curve
   }
 
-  set curve(newCurve) {
+  set curve (newCurve) {
     if (acceptedCurve.includes(newCurve)) {
       this._curve = newCurve
     } else {
@@ -49,11 +49,11 @@ class EC {
       this._curve = newCurve
     }
   }
-  get name() {
+  get name () {
     return this._name
   }
 
-  set name(newName) {
+  set name (newName) {
     if (acceptedAlgName.includes(newName)) {
       this._name = newName
     } else {
@@ -66,10 +66,9 @@ class EC {
   /**
    * Generate an EC key pair and store them in the class instance
    *
-   * @param {string} curve - The chosen Elliptic curve ("P-256", "P-384", or "P-521")
    * @returns {CryptoKey} - The generated EC key Pair as CryptoKey
    */
-  genECKeyPair() {
+  genECKeyPair () {
     let self = this
     return crypto.subtle.generateKey({
       name: this.name,
@@ -93,13 +92,14 @@ class EC {
   }
 
   /**
-   * Check the received key format (CryptoKey or raw key).
-   * If raw, import the key and return the CryptoKey
-   *
-   * @param {obj} obj - A trick to call another prototype
-   * @returns {CryptoKey|arrayBuffer} - The public key
-   */
-  checkRaw(obj, key) {
+  * Check the received key format (CryptoKey or raw key).
+  * If raw, import the key and return the CryptoKey
+  *
+  * @param {obj} obj - Save this in obj
+  * @param {CryptoKey|arrayBuffer} key - The key
+  * @returns {CryptoKey|arrayBuffer} - The CryptoKey
+  */
+  checkRaw (obj, key) {
     return new Promise(function (resolve, reject) {
       if (key instanceof Uint8Array) {
         obj.importKeyRaw(key)
@@ -121,16 +121,16 @@ class EC {
    * @param {CryptoKey} [privateKey] The EC private key if not generated via genECKeyPair
    * @returns {arrayBuffer} The derived key
    */
-  deriveKeyECDH(publicKey, type = 'aes-gcm', keySize = 128, privateKey) {
+  deriveKeyECDH (publicKey, type = 'aes-gcm', keySize = 128, privateKey) {
     return this.checkRaw(this, publicKey)
       .then(key => {
         return crypto.subtle.deriveKey({
           name: this.name,
           public: key
         }, privateKey || this.privateKey, {
-            name: type,
-            length: keySize
-          }, true, ['decrypt', 'encrypt'])
+          name: type,
+          length: keySize
+        }, true, ['decrypt', 'encrypt'])
       })
       .then(derivedKey => {
         return crypto.subtle.exportKey('raw', derivedKey)
@@ -146,7 +146,7 @@ class EC {
    * {CryptoKey} key - The key that we extract raw value (available in EC.publicKey)
    * @returns {arrayBuffer} The raw key
    */
-  exportKeyRaw(key) {
+  exportKeyRaw (key) {
     return crypto.subtle.exportKey('raw', key || this.publicKey)
       .then(rawKey => new Uint8Array(rawKey))
       .catch(logFail)
@@ -159,15 +159,15 @@ class EC {
    * @param {String} curve - The elliptic curve used at the imported key creation
    * @returns {Promise} - The CryptoKey
    */
-  importKeyRaw(key, curve, algName) {
+  importKeyRaw (key, curve, algName) {
     return crypto.subtle.importKey('raw', key, {
-      name: algName || this.name,
-      namedCurve: curve || this.curve
+      name: algName ||  this.name,
+      namedCurve: curve ||  this.curve
     }, true, [])
   }
 
   /**
-   * Sign data 
+   * Sign data
    * EC private key could be already stored in EC.privateKey
    *
    * @param {arrayBuffer} data - The data to be signed
@@ -175,15 +175,15 @@ class EC {
    * @param {String} [hash] - The hash function used for signature. Default 'SHA-256'
    * @returns {arrayBuffer} - The signature
    */
-  signEC(data, privateKey, hash) {
+  signEC (data, privateKey, hash) {
     return crypto.subtle.sign({
       name: 'ECDSA',
       hash: { name: hash || this.hash }
     }, privateKey || this.privateKey, data)
-    .then(signature => new Uint8Array(signature))
-    .catch(logFail)
+      .then(signature => new Uint8Array(signature))
+      .catch(logFail)
   }
-  
+
   /**
    * Verif signature
    *
@@ -193,7 +193,7 @@ class EC {
    * @param {String} [hash] - The hash function used for signature. Default 'SHA-256'
    * @returns {boolean} - Result
    */
-  verifEC(publicKey, signature, signedData, hash) {
+  verifEC (publicKey, signature, signedData, hash) {
     return crypto.subtle.verify({
       name: 'ECDSA',
       hash: { name: hash || this.hash }
@@ -201,4 +201,4 @@ class EC {
   }
 }
 export default EC
-export {EC}
+export { EC }

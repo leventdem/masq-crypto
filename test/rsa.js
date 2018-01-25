@@ -1,28 +1,16 @@
-import RSA from '../src/RSA.js'
-import { aesModes } from '../src/AES.js'
-import * as utils from '../src/utils.js'
-// import assert from 'assert'
-// import chai from 'chai'
-
-// To avoid error on import please specify the default export in the imported class
-// with export default <className> instead of export {className as default}
-
-const should = chai.should()
-const keys = []
-
 describe('MasqCrypto RSA', function () {
-  var TEST_MESSAGE = utils.toArray('1234567890123456')
+  var TEST_MESSAGE = MasqCrypto.utils.toArray('1234567890123456')
   var KEYS = [
     { alg: 'RSA-PSS', usages: ['sign', 'verify'] }
   ]
   var DIGEST = ['SHA-256', 'SHA-384', 'SHA-512']
   var MODULUS_LENGTH = [2048, 4096]
 
-  var keys = []
+  var rsaKeys = []
 
   context('Generate key', () => {
     it('Params', done => {
-      let cRSA = new RSA(
+      let cRSA = new MasqCrypto.RSA(
         {
           name: 'RSA-PSS',
           hash: 'SHA-256',
@@ -61,21 +49,21 @@ describe('MasqCrypto RSA', function () {
             publicKey: null,
             usages: key.usages
           }
-          keys.push(keyTemplate)
+          rsaKeys.push(keyTemplate)
           it(keyName, done => {
             var alg = {
               name: key.alg,
               hash: digest,
               modulusLength: modLen
             }
-            let cRSA = new RSA(alg)
+            let cRSA = new MasqCrypto.RSA(alg)
             cRSA.genRSAKeyPair()
               .then(keyPair => {
                 should.exist(cRSA.publicKey, 'RSA public Key is empty')
                 should.exist(cRSA.privateKey, 'RSA private Key is empty')
                 should.exist(keyPair.publicKey, 'RSA public Key is empty')
                 should.exist(keyPair.privateKey, 'RSA private Key is empty')
-                // save  keys for next tests
+                // save  rsaKeys for next tests
                 keyTemplate.privateKey = keyPair.privateKey
                 keyTemplate.publicKey = keyPair.publicKey
 
@@ -88,11 +76,11 @@ describe('MasqCrypto RSA', function () {
     })
   })
   context('Sign/Verify', () => {
-    keys.filter(key => key.usages.some(usage => usage === 'sign'))
+    rsaKeys.filter(key => key.usages.some(usage => usage === 'sign'))
       .forEach(key => {
         it(key.name, done => {
           // TODO: Add label
-          let cRSA = new RSA({ name: key.privateKey.algorithm.name })
+          let cRSA = new MasqCrypto.RSA({ name: key.privateKey.algorithm.name })
           cRSA.signRSA(TEST_MESSAGE, key.privateKey)
             .then(sig => {
               should.exist(sig, 'Signature does not exist')
@@ -109,7 +97,7 @@ describe('MasqCrypto RSA', function () {
   context('Export/Import', () => {
     // TODO add format : "spki", "pkcs8"
     it(`jwk\t RSA-PSS`, done => {
-      let cRSA = new RSA({ name: 'RSA-PSS' })
+      let cRSA = new MasqCrypto.RSA({ name: 'RSA-PSS' })
       cRSA.genRSAKeyPair()
         .then(keyPair => {
           cRSA.exportRSAPubKeyRaw(keyPair.publicKey, 'jwk')
