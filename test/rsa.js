@@ -35,7 +35,7 @@ describe('MasqCrypto RSA', function () {
           chai.expect(pubkey.extractable, true)
         })
         .then(done, done)
-    })
+    }).timeout(10000)
     // Keys
     KEYS.forEach(key => {
       // Digest
@@ -70,7 +70,7 @@ describe('MasqCrypto RSA', function () {
                 return Promise.resolve()
               })
               .then(done, done)
-          }).timeout(modLen === 4096 ? 8000 : 3000)
+          }).timeout(20000)
         })
       })
     })
@@ -111,6 +111,6 @@ describe('MasqCrypto RSA', function () {
               // chai.expect(sig.length).to.not.equal(0, 'Has empty signature value')
             })
         }).then(done, done)
-    })
+    }).timeout(10000)
   })
 })

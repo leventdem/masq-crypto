@@ -4,7 +4,7 @@
   "description": "Crypto wrapper for Masq",
   "main": "src/index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha-headless-chrome -f ./test/index.html",
+    "test": "./node_modules/.bin/mocha-headless-chrome -f ./test/index.html -a no-sandbox -a disable-setuid-sandbox",
     "clean": "rm  dist/index.js dist/AES.js dist/utils.js dist/EC.js dist/RSA.js ",
     "build": "./node_modules/.bin/babel ./src --experimental -d ./dist && browserify ./dist/index.js --standalone MasqCrypto > dist/MasqCrypto.js && npm run clean",
     "minify": "npm run build && uglifyjs ./dist/MasqCrypto.js -o ./dist/MasqCrypto.min.js --compress --mangle -- ",
