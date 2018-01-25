@@ -24,10 +24,10 @@ npm install
 # Demo
 In the main html page, the user has access to 4 different pages. 
 
-## A test page
+## A test page
 This page is used to check if eveything works well on the browser. It checks the main cryptographic functionalities.
 
-## A Perfect Forward PFS demo
+## A Perfect Forward PFS demo
 A web socket based PFD demo is performed on this page. 
 
 On two browsers, follow those steps :
