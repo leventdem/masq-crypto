@@ -77,11 +77,11 @@ var encryptBuffer = function encryptBuffer(data, key, cipherContext) {
  * AES cipher
  * @constructor
  * @param {Object} params - The AES cipher parameters
- * @param {string} params.mode - The encryption mode : aes-gcm, aes-cbc
- * @param {ArrayBuffer} params.key - The AES CryptoKey
- * @param {number} params.keySize - The key size in bits (128, 192, 256)
+ * @param {string} [params.mode] - The encryption mode : aes-gcm, aes-cbc
+ * @param {ArrayBuffer} [params.key] - The AES CryptoKey
+ * @param {number} [params.keySize] - The key size in bits (128, 192, 256)
  * @param {number} [params.iv] - The IV, if not provided it will be generated randomly
- * @param {string} [params.additionalData] - Tee authenticated data, only for aes-gcm mode.
+ * @param {string} [params.additionalData] - The authenticated data, only for aes-gcm mode.
  */
 
 var AES = function () {
@@ -104,8 +104,8 @@ var AES = function () {
     * Check the received key format (CryptoKey or raw key).
     * If raw, import the key and return the CryptoKey
     *
-    * @param {obj} obj - A trick to call another prototype
-    * @returns {CryptoKey|arrayBuffer} - The key
+    * @param {obj} obj - Save this in obj
+    * @returns {CryptoKey|arrayBuffer} - The CryptoKey
     */
     value: function checkRaw(obj, key) {
       return new Promise(function (resolve, reject) {
@@ -118,6 +118,14 @@ var AES = function () {
         }
       });
     }
+
+    /**
+    * Transform a raw key into a CryptoKey
+    *
+    * @param {arrayBuffer} key - The key we want to import
+    * @returns {CryptoKey} - The CryptoKey
+    */
+
   }, {
     key: 'importKeyRaw',
     value: function importKeyRaw(key) {
@@ -127,6 +135,18 @@ var AES = function () {
     }
   }, {
     key: 'decrypt',
+
+
+    /**
+    * Decrypt the given input. All cipher context infomrmation
+    * have been initialized at object creation (default or parameter)
+    *
+    * @param {object} input - The ciphertext and associated decryption data
+    * @param {hexString} input.ciphertext - The ciphertext
+    * @param {hexString} input.iv - The IV used at encryption
+    * @param {hexString} [input.version] - The additionnal data for aes-gcm mode
+    * @returns {string} - The decrypted input
+    */
     value: function decrypt(input) {
       // Prepare context, all modes have at least one property : ciphertext
       var context = {};
@@ -174,6 +194,16 @@ var AES = function () {
         console.log('The mode ' + this.mode + ' is not yet supported');
       }
     }
+
+    /**
+    * Eecrypt the given input. All cipher context information
+    * have been initialized at object creation (as default or as parameter)
+    * If the input is an ohas to be stringified
+    *
+    * @param {string} input - The plaintext
+    * @returns {object} - The encrypted input with additional cipher information (e.g. iv)
+    */
+
   }, {
     key: 'encrypt',
     value: function encrypt(input) {
@@ -236,6 +266,7 @@ var AES = function () {
 
     /**
      * Generate an AES key based on the cipher mode and keysize
+     * Cipher mode and keys are initialized at cipher AES instance creation.
      *
      * @returns {CryptoKey} - The generated AES key.
      */
@@ -335,9 +366,9 @@ var acceptedAlgName = ['ECDH', 'ECDSA'];
  * Elliptic Curve
  * @constructor
  * @param {Object} params - The EC cipher parameters
- * @param {string} params.name - The algorithm name used during key generation or derivation
- * @param {string} params.hash - The hash function (sign/verif). Default : "SHA-256", possible values: "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
- * @param {string} params.curve - The elliptic curve ("P-256", "P-384", or "P-521")
+ * @param {string} params.name - The algorithm name ("ECDH" or "ECDSA")
+ * @param {string} [params.hash] - The hash function (sign/verif). Default : "SHA-256", possible values: "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
+ * @param {string} [params.curve] - The elliptic curve ("P-256", "P-384", or "P-521")
  */
 
 var EC = function () {
@@ -358,7 +389,6 @@ var EC = function () {
     /**
      * Generate an EC key pair and store them in the class instance
      *
-     * @param {string} curve - The chosen Elliptic curve ("P-256", "P-384", or "P-521")
      * @returns {CryptoKey} - The generated EC key Pair as CryptoKey
      */
     value: function genECKeyPair() {
@@ -383,12 +413,13 @@ var EC = function () {
     }
 
     /**
-     * Check the received key format (CryptoKey or raw key).
-     * If raw, import the key and return the CryptoKey
-     *
-     * @param {obj} obj - A trick to call another prototype
-     * @returns {CryptoKey|arrayBuffer} - The public key
-     */
+    * Check the received key format (CryptoKey or raw key).
+    * If raw, import the key and return the CryptoKey
+    *
+    * @param {obj} obj - Save this in obj
+    * @param {CryptoKey|arrayBuffer} key - The key
+    * @returns {CryptoKey|arrayBuffer} - The CryptoKey
+    */
 
   }, {
     key: 'checkRaw',
@@ -472,7 +503,7 @@ var EC = function () {
     }
 
     /**
-     * Sign data 
+     * Sign data
      * EC private key could be already stored in EC.privateKey
      *
      * @param {arrayBuffer} data - The data to be signed
@@ -592,8 +623,8 @@ var RSA = function () {
     /**
      * Generate a RSA-PSS key pair for signature and verification
      *
-     * @param {int} modulusLength Chosen modulus length (1024, 2048 or 4096)
-     * @returns {Promise} RSA key pair : publicKey and privateKey
+     * @param {int} modulusLength - The modulus length (1024, 2048 or 4096)
+     * @returns {Promise} - The RSA key pair : publicKey and privateKey
      */
     value: function genRSAKeyPair() {
       var modulusLength = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 4096;
@@ -678,10 +709,10 @@ var RSA = function () {
     }
 
     /**
-     * Export RSA-PSS public key
+     * Export RSA-PSS public raw key
      *
-     * @param {CryptoKey} key The key that we extract raw value
-     * @returns {Promise} The raw key
+     * @param {CryptoKey} key - The key that we extract raw value
+     * @returns {Promise} - The raw key
      */
 
   }, {
@@ -778,79 +809,6 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.utils = utils;
-
-
-var aesCTR = function aesCTR() {
-  // EXAMPLE
-  var data = {
-    POI_1: 'Tour eiffel',
-    POI_2: 'Bastille',
-    POI_3: 'Cafeteria'
-
-    // We generate a 128 bits key with crypto random
-  };var AESKey = window.crypto.getRandomValues(new Uint8Array(16));
-  // We create an AES object with some paramters
-  var myAES = new _AES2.default({
-    mode: _AES.aesModes.CTR,
-    key: AESKey,
-    keySize: 128
-  });
-  console.log(myAES);
-  myAES.encrypt(JSON.stringify(data)).then(function (encryptedJSON) {
-    console.log(encryptedJSON);
-    return myAES.decrypt(encryptedJSON);
-  }).then(function (decryptedJSON) {
-    return console.log(decryptedJSON);
-  }).catch(function (err) {
-    return console.log(err);
-  });
-};
-
-var ecdh = function ecdh() {
-  var aliceEC = new _EC2.default({});
-  var bobEC = new _EC2.default({});
-
-  var generateECKeys = function generateECKeys() {
-    console.log('Generation of ephemeral EC keys for Alice and Bob');
-    return Promise.all([aliceEC.genECKeyPair(), bobEC.genECKeyPair({})]);
-  };
-
-  var exportRawKeys = function exportRawKeys() {
-    console.log('Extraction of raw EC public keys for Alice and Bob');
-    return Promise.all([bobEC.exportKeyRaw(), aliceEC.exportKeyRaw()]);
-  };
-
-  // Used to store the raw EC public Keys
-  var alice = {};
-  var bob = {};
-
-  console.log('Start test');
-
-  generateECKeys().then(exportRawKeys).then(function (rawKeys) {
-    bob.ECRawPubKey = rawKeys[0];
-    alice.ECRawPubKey = rawKeys[1];
-    return bobEC.importKeyRaw(alice.ECRawPubKey);
-  }).then(function (AliceECPubKey) {
-    console.log('Bob : public key verification :  ok');
-    // Bob : with Alice Public EC key and his EC private key, we derive a symmetric key
-    console.log("Bob derives a symmetric key with Alice's Public EC key and his EC private key ");
-    return bobEC.deriveKeyECDH(AliceECPubKey, 'aes-gcm', 128);
-  }).then(function (derivedSymmetricAESKeyBob) {
-    aliceEC.importKeyRaw(bob.ECRawPubKey).then(function (BobECPubKey) {
-      aliceEC.deriveKeyECDH(BobECPubKey, 'aes-gcm', 128).then(function (derivedSymmetricAESKeyAlice) {
-        console.log(derivedSymmetricAESKeyAlice);
-        console.log(derivedSymmetricAESKeyBob);
-      }).catch(function (err) {
-        return console.log(err);
-      });
-    }).catch(function (err) {
-      return console.log(err);
-    });
-  }).catch(function (err) {
-    return console.log(err);
-  });
-};
-// ecdh()
 },{"./AES":1,"./EC":2,"./RSA":3,"./utils":5}],5:[function(require,module,exports){
 'use strict';
 
