@@ -2,7 +2,7 @@
   "name": "masq-crypto",
   "version": "0.0.1",
   "description": "Crypto wrapper for Masq",
-  "main": "dist/Masqcrypto.js",
+  "main": "dist/MasqCrypto.js",
   "scripts": {
     "test": "./node_modules/.bin/mocha-headless-chrome -f ./test/index.html -a no-sandbox -a disable-setuid-sandbox",
     "clean": "rm  dist/index.js dist/AES.js dist/utils.js dist/EC.js dist/RSA.js ",
