@@ -1,11 +1,6 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.MasqCrypto = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.AES = exports.aesModes = undefined;
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _utils = require('./utils.js');
@@ -335,15 +330,10 @@ var AES = function () {
   return AES;
 }();
 
-exports.default = AES;
-exports.aesModes = aesModes;
-exports.AES = AES;
+module.exports.AES = AES;
+module.exports.aesModes = aesModes;
 },{"./utils.js":5}],2:[function(require,module,exports){
 'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -574,14 +564,9 @@ var EC = function () {
   return EC;
 }();
 
-exports.default = EC;
-exports.EC = EC;
+module.exports.EC = EC;
 },{}],3:[function(require,module,exports){
 'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -748,73 +733,36 @@ var RSA = function () {
   return RSA;
 }();
 
-exports.default = RSA;
-exports.RSA = RSA;
+module.exports.RSA = RSA;
 },{}],4:[function(require,module,exports){
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.utils = undefined;
-
-var _EC = require('./EC');
-
-Object.keys(_EC).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function get() {
-      return _EC[key];
-    }
-  });
-});
-
 var _AES = require('./AES');
-
-Object.keys(_AES).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function get() {
-      return _AES[key];
-    }
-  });
-});
-
-var _RSA = require('./RSA');
-
-Object.keys(_RSA).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function get() {
-      return _RSA[key];
-    }
-  });
-});
 
 var _AES2 = _interopRequireDefault(_AES);
 
+var _EC = require('./EC');
+
 var _EC2 = _interopRequireDefault(_EC);
+
+var _RSA = require('./RSA');
 
 var _RSA2 = _interopRequireDefault(_RSA);
 
 var _utils = require('./utils');
 
-var utils = _interopRequireWildcard(_utils);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+var _utils2 = _interopRequireDefault(_utils);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-exports.utils = utils;
+module.exports.AES = _AES2.default.AES;
+module.exports.aesModes = _AES2.default.aesModes;
+module.exports.EC = _EC2.default.EC;
+module.exports.RSA = _RSA2.default.RSA;
+module.exports.utils = _utils2.default;
 },{"./AES":1,"./EC":2,"./RSA":3,"./utils":5}],5:[function(require,module,exports){
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
 /**
  * Convert ascii to ArrayBufffer
  * ex : "bonjour" -> Uint8Array [ 98, 111, 110, 106, 111, 117, 114 ]
@@ -939,12 +887,13 @@ var randomString = function randomString() {
   return result;
 };
 
-exports.default = toArray;
-exports.toArray = toArray;
-exports.bufferToHexString = bufferToHexString;
-exports.toString = toString;
-exports.hexStringToBuffer = hexStringToBuffer;
-exports.deriveKey = deriveKey;
-exports.randomString = randomString;
+module.exports = {
+  toArray: toArray,
+  bufferToHexString: bufferToHexString,
+  toString: toString,
+  hexStringToBuffer: hexStringToBuffer,
+  deriveKey: deriveKey,
+  randomString: randomString
+};
 },{}]},{},[4])(4)
 });

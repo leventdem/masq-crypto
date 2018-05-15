@@ -135,5 +135,4 @@ class RSA {
     return crypto.subtle.exportKey(format || 'jwk', key || this.publicKey)
   }
 }
-export default RSA
-export {RSA}
+module.exports.RSA = RSA

@@ -119,5 +119,11 @@ const randomString = (length = 18) => {
   return result
 }
 
-export default toArray
-export { toArray, bufferToHexString, toString, hexStringToBuffer, deriveKey, randomString }
+module.exports = {
+  toArray: toArray,
+  bufferToHexString: bufferToHexString,
+  toString: toString,
+  hexStringToBuffer: hexStringToBuffer,
+  deriveKey: deriveKey,
+  randomString: randomString
+}
