@@ -37,6 +37,14 @@ tr
         <th> <button type="button" id="aesCTR">Run AES-CTR demo</button></th>
     </tr>
     </table>
+    <h1>Hash SHA-256 :</h1>
+    <table>
+      <tr>
+          <th>Hash of "hello world" :</th>
+          <th> <button type="button" id="computeHash">Go</button></th>
+      </tr>
+      
+      </table>
     <h1>PBKDF2 :</h1>
     <table>
       <tr>
@@ -46,6 +54,17 @@ tr
       <tr>
           <th>Derive passphrase :</th>
           <th> <button type="button" id="derive">Go</button></th>
+      </tr>
+      </table>
+      <h1>Master key protection :</h1>
+    <table>
+      <tr>
+          <th>Generate a AES master key and encrypt it with the derived key :</th>
+          <th> <button type="button" id="masterKeyEncrypt">Go</button></th>
+      </tr>
+      <tr>
+        <th>Get the encrypted  AES master key and decrypt it with the derived key :</th>
+          <th> <button type="button" id="masterKeyDecrypt">Go</button></th>
       </tr>
       </table>
       <h1>ECDH :</h1>

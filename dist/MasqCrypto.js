@@ -129,9 +129,25 @@ var AES = function () {
   }, {
     key: 'importKeyRaw',
     value: function importKeyRaw(key) {
-      return crypto.subtle.importKey('raw', key, {
+      var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'raw';
+
+      return crypto.subtle.importKey(type, key, {
         name: this.mode
       }, true, ['encrypt', 'decrypt']);
+    }
+    /**
+    * Transform a CryptoKey int oa raw key
+    *
+    * @param {CryptoKey} key - The CryptoKey
+    * @returns {arrayBuffer} - The raw key
+    */
+
+  }, {
+    key: 'exportKeyRaw',
+    value: function exportKeyRaw(key) {
+      var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'raw';
+
+      return crypto.subtle.exportKey(type, key);
     }
   }, {
     key: 'decrypt',
@@ -901,7 +917,7 @@ var hexStringToBuffer = function hexStringToBuffer(hexString) {
 var deriveKey = function deriveKey(passPhrase, salt) {
   var iterations = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 10000;
 
-  // Always specify a strong salt 
+  // Always specify a strong salt
   if (iterations < 10000) {
     console.log('The iteration number is less than 10000, increase it !');
   }
@@ -915,6 +931,24 @@ var deriveKey = function deriveKey(passPhrase, salt) {
     }, baseKey, 128);
   }).then(function (derivedKey) {
     return new Uint8Array(derivedKey);
+  }).catch(function (err) {
+    return console.log(err);
+  });
+};
+/**
+ * Hash of a string or arrayBuffer
+ *
+ * @param {string | arrayBuffer} msg The message
+ * @param {string} [type] The hash name (SHA-256 by default)
+ * @returns {Promise}   A promise that contains the hash as a Uint8Array
+ */
+var hash = function hash(msg) {
+  var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'SHA-256';
+
+  return window.crypto.subtle.digest({
+    name: 'SHA-256'
+  }, typeof passPhrase === 'string' ? toArray(msg) : msg).then(function (digest) {
+    return new Uint8Array(digest);
   }).catch(function (err) {
     return console.log(err);
   });
@@ -941,6 +975,7 @@ var randomString = function randomString() {
 
 exports.default = toArray;
 exports.toArray = toArray;
+exports.hash = hash;
 exports.bufferToHexString = bufferToHexString;
 exports.toString = toString;
 exports.hexStringToBuffer = hexStringToBuffer;

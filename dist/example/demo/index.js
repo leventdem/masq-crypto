@@ -38,6 +38,24 @@ document.addEventListener('DOMContentLoaded', function () {
       derive();
     });
   }
+  el = document.getElementById('masterKeyEncrypt');
+  if (el) {
+    el.addEventListener('click', function (e) {
+      masterKeyEncrypt();
+    });
+  }
+  el = document.getElementById('masterKeyDecrypt');
+  if (el) {
+    el.addEventListener('click', function (e) {
+      masterKeyDecrypt();
+    });
+  }
+  el = document.getElementById('computeHash');
+  if (el) {
+    el.addEventListener('click', function (e) {
+      computeHash();
+    });
+  }
   el = document.getElementById('ecdh');
   if (el) {
     el.addEventListener('click', function (e) {
@@ -129,6 +147,14 @@ var aesCBC = function aesCBC() {
   });
 };
 
+var computeHash = function computeHash() {
+  MasqCrypto.utils.hash('hello world').then(function (digest) {
+    console.log('Digest :', MasqCrypto.utils.bufferToHexString(digest));
+  }).catch(function (err) {
+    return console.log(err);
+  });
+};
+
 var passPhrase = '';
 var generatePassPhrase = function generatePassPhrase() {
   console.log('Passphrase generation : ');
@@ -144,6 +170,66 @@ var derive = function derive() {
     console.log('Salt : ', MasqCrypto.utils.toArray('theSalt'));
     console.log('Iterations : ', iterations);
     console.log('Derived Key : ', derivedKey);
+  }).catch(function (err) {
+    return console.log(err);
+  });
+};
+
+var masterKeyEncrypt = function masterKeyEncrypt() {
+  // We create an AES object with some paramters
+  var cipherAES = new MasqCrypto.AES({
+    mode: MasqCrypto.aesModes.GCM,
+    keySize: 128
+  });
+
+  var iterations = 10000;
+  var encryptedMasterKey = {};
+  MasqCrypto.utils.deriveKey('secret', MasqCrypto.utils.toArray('theSalt'), iterations).then(function (derivedKey) {
+    console.log('Salt : ', MasqCrypto.utils.toArray('theSalt'));
+    console.log('Iterations : ', iterations);
+    console.log('Derived Key : ', derivedKey);
+    cipherAES.key = derivedKey;
+    return cipherAES.genAESKey();
+  }).then(function (key) {
+    return cipherAES.exportKeyRaw(key);
+  }).then(function (rawKey) {
+    var rawKeyHexStr = MasqCrypto.utils.bufferToHexString(new Uint8Array(rawKey));
+    console.log('aes key', rawKeyHexStr);
+    return cipherAES.encrypt(rawKeyHexStr);
+  }).then(function (encryptedJSON) {
+    encryptedMasterKey = encryptedJSON;
+    // console.log(encryptedJSON)
+    Object.keys(encryptedJSON).forEach(function (key) {
+      console.log(key + ' : ' + encryptedJSON[key]);
+    });
+  }).catch(function (err) {
+    return console.log(err);
+  });
+};
+var masterKeyDecrypt = function masterKeyDecrypt() {
+  // We create an AES object with some paramters
+  var cipherAES = new MasqCrypto.AES({
+    mode: MasqCrypto.aesModes.GCM,
+    keySize: 128
+  });
+
+  var iterations = 10000;
+  MasqCrypto.utils.deriveKey('secret', MasqCrypto.utils.toArray('theSalt'), iterations).then(function (derivedKey) {
+    console.log('Salt : ', MasqCrypto.utils.toArray('theSalt'));
+    console.log('Iterations : ', iterations);
+    console.log('Derived Key : ', derivedKey);
+    return cipherAES.importKeyRaw(derivedKey);
+  }).then(function (key) {
+    cipherAES.key = key;
+    var encryptedMasterKey = {
+      ciphertext: '01a834669ebd48a3ab971d375e8d1bb1a5eb11c9e0e1c5d26bae2ea5e2c8bd71dbeac1e1d23a27619a34b3c1bb21e94b',
+      iv: '05d0437a8eb985b7384a6880',
+      version: ''
+    };
+    return cipherAES.decrypt(encryptedMasterKey);
+  }).then(function (decryptedJSON) {
+    // master key must be : 2b4b1b8bceebecbcaed663081469a7c3
+    console.log(decryptedJSON);
   }).catch(function (err) {
     return console.log(err);
   });
