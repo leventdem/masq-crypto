@@ -80,7 +80,7 @@ const hexStringToBuffer = (hexString) => {
  * @returns {Promise}   A promise that contains the derived key
  */
 const deriveKey = (passPhrase, salt, iterations = 10000) => {
-  // Always specify a strong salt 
+  // Always specify a strong salt
   if (iterations < 10000) { console.log('The iteration number is less than 10000, increase it !') }
 
   return crypto.subtle.importKey(
@@ -99,6 +99,23 @@ const deriveKey = (passPhrase, salt, iterations = 10000) => {
       }, baseKey, 128)
     })
     .then(derivedKey => new Uint8Array(derivedKey))
+    .catch(err => console.log(err))
+}
+/**
+ * Hash of a string or arrayBuffer
+ *
+ * @param {string | arrayBuffer} msg The message
+ * @param {string} [type] The hash name (SHA-256 by default)
+ * @returns {Promise}   A promise that contains the hash as a Uint8Array
+ */
+const hash = (msg, type = 'SHA-256') => {
+  return window.crypto.subtle.digest(
+    {
+      name: 'SHA-256'
+    },
+    (typeof passPhrase === 'string') ? toArray(msg) : msg
+  )
+    .then(digest => new Uint8Array(digest))
     .catch(err => console.log(err))
 }
 
@@ -120,4 +137,4 @@ const randomString = (length = 18) => {
 }
 
 export default toArray
-export { toArray, bufferToHexString, toString, hexStringToBuffer, deriveKey, randomString }
+export { toArray, hash, bufferToHexString, toString, hexStringToBuffer, deriveKey, randomString }
