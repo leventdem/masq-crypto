@@ -200,5 +200,4 @@ class EC {
     }, publicKey, signature, signedData)
   }
 }
-export default EC
-export { EC }
+module.exports.EC = EC

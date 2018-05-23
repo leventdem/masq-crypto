@@ -17,7 +17,7 @@ const logFail = (err) => {
  * @param {string} params.modulusLength - The modulus length (4096 default)
  */
 class RSA {
-  constructor(params) {
+  constructor (params) {
     this.modulusLength = params.modulusLength || 4096
     this.hash = params.hash || 'SHA-256'
     this.name = params.name || 'RSA-PSS'
@@ -25,7 +25,7 @@ class RSA {
     this.private = null
   }
 
-  get publicKey() {
+  get publicKey () {
     return this._publicKey
   }
 
@@ -34,15 +34,15 @@ class RSA {
    *
    * @param {Cryptokey} keys - The public RSA key
    */
-  set publicKey(newPublicKey) {
+  set publicKey (newPublicKey) {
     this._publicKey = newPublicKey
   }
 
-  get privateKey() {
+  get privateKey () {
     return this._privateKey
   }
 
-  set privateKey(newPrivateKey) {
+  set privateKey (newPrivateKey) {
     this._privateKey = newPrivateKey
   }
 
@@ -52,7 +52,7 @@ class RSA {
    * @param {int} modulusLength - The modulus length (1024, 2048 or 4096)
    * @returns {Promise} - The RSA key pair : publicKey and privateKey
    */
-  genRSAKeyPair(modulusLength = 4096) {
+  genRSAKeyPair (modulusLength = 4096) {
     let self = this
     return crypto.subtle.generateKey({
       name: 'RSA-PSS',
@@ -78,7 +78,7 @@ class RSA {
    * @param {arrayBuffer} signedData - Signed data
    * @returns {boolean} - Result
    */
-  verifRSA(publicKey, signature, signedData) {
+  verifRSA (publicKey, signature, signedData) {
     return crypto.subtle.verify({
       name: 'RSA-PSS',
       saltLength: 16
@@ -93,7 +93,7 @@ class RSA {
    * @param {CryptoKey} privateKey - The private key (if nt sotred in RSA class)
    * @returns {arrayBuffer} - The signature
    */
-  signRSA(data, privateKey) {
+  signRSA (data, privateKey) {
     return crypto.subtle.sign({
       name: 'RSA-PSS',
       saltLength: 16
@@ -110,7 +110,7 @@ class RSA {
    * @param {jwk} hash - The hash name of the imported RSA key (default : "SHA-256")
    * @returns {Promise} - The imported key as CryptoKey
    */
-  importRSAPubKeyRaw(key, name, hash) {
+  importRSAPubKeyRaw (key, name, hash) {
     return crypto.subtle.importKey('jwk', {
       kty: key.kty,
       e: key.e,
@@ -118,11 +118,11 @@ class RSA {
       alg: key.alg,
       ext: key.ext
     }, {
-        name: name || 'RSA-PSS',
-        hash: {
-          name: hash || 'SHA-256'
-        }
-      }, false, ['verify'])
+      name: name || 'RSA-PSS',
+      hash: {
+        name: hash || 'SHA-256'
+      }
+    }, false, ['verify'])
   }
 
   /**
@@ -131,9 +131,8 @@ class RSA {
    * @param {CryptoKey} key - The key that we extract raw value
    * @returns {Promise} - The raw key
    */
-  exportRSAPubKeyRaw(key, format) {
+  exportRSAPubKeyRaw (key, format) {
     return crypto.subtle.exportKey(format || 'jwk', key || this.publicKey)
   }
 }
-export default RSA
-export {RSA}
+module.exports.RSA = RSA

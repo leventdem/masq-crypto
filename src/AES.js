@@ -320,5 +320,5 @@ class AES {
     }, true, ['decrypt', 'encrypt'])
   }
 }
-export default AES
-export { aesModes, AES }
+module.exports.AES = AES
+module.exports.aesModes = aesModes
