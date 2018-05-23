@@ -118,8 +118,8 @@ class AES {
   * @param {arrayBuffer} key - The key we want to import
   * @returns {CryptoKey} - The CryptoKey
   */
-  importKeyRaw (key) {
-    return crypto.subtle.importKey('raw', key, {
+  importKeyRaw (key, type = 'raw') {
+    return crypto.subtle.importKey(type, key, {
       name: this.mode
     }, true, ['encrypt', 'decrypt'])
   }
@@ -129,8 +129,8 @@ class AES {
   * @param {CryptoKey} key - The CryptoKey
   * @returns {arrayBuffer} - The raw key
   */
-  exportKeyRaw (key) {
-    return crypto.subtle.exportKey('raw', key)
+  exportKeyRaw (key, type = 'raw') {
+    return crypto.subtle.exportKey(type, key)
   }
 
   get key () {
