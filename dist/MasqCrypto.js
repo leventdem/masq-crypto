@@ -769,62 +769,29 @@ exports.RSA = RSA;
 },{}],4:[function(require,module,exports){
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.utils = undefined;
-
-var _EC = require('./EC');
-
-Object.keys(_EC).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function get() {
-      return _EC[key];
-    }
-  });
-});
-
 var _AES = require('./AES');
-
-Object.keys(_AES).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function get() {
-      return _AES[key];
-    }
-  });
-});
-
-var _RSA = require('./RSA');
-
-Object.keys(_RSA).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function get() {
-      return _RSA[key];
-    }
-  });
-});
 
 var _AES2 = _interopRequireDefault(_AES);
 
+var _EC = require('./EC');
+
 var _EC2 = _interopRequireDefault(_EC);
+
+var _RSA = require('./RSA');
 
 var _RSA2 = _interopRequireDefault(_RSA);
 
 var _utils = require('./utils');
 
-var utils = _interopRequireWildcard(_utils);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+var _utils2 = _interopRequireDefault(_utils);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-exports.utils = utils;
+module.exports.AES = _AES2.default.AES;
+module.exports.aesModes = _AES2.default.aesModes;
+module.exports.EC = _EC2.default.EC;
+module.exports.RSA = _RSA2.default.RSA;
+module.exports.utils = _utils2.default;
 },{"./AES":1,"./EC":2,"./RSA":3,"./utils":5}],5:[function(require,module,exports){
 'use strict';
 

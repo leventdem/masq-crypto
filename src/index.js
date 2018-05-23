@@ -1,8 +1,10 @@
-import AES, { aesModes } from './AES'
+import AES from './AES'
 import EC from './EC'
 import RSA from './RSA'
-import * as utils from './utils'
-export * from './EC'
-export * from './AES'
-export * from './RSA'
-export {utils}
+import utils from './utils'
+
+module.exports.AES = AES.AES
+module.exports.aesModes = AES.aesModes
+module.exports.EC = EC.EC
+module.exports.RSA = RSA.RSA
+module.exports.utils = utils
