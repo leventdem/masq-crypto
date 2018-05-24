@@ -115,6 +115,21 @@ var AES = function () {
     }
 
     /**
+    * Transform a CryptoKey into a raw key
+    *
+    * @param {CryptoKey} key - The CryptoKey
+    * @returns {arrayBuffer} - The raw key
+    */
+
+  }, {
+    key: 'exportKeyRaw',
+    value: function exportKeyRaw(key) {
+      var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'raw';
+
+      return crypto.subtle.exportKey(type, key);
+    }
+
+    /**
     * Transform a raw key into a CryptoKey
     *
     * @param {arrayBuffer} key - The key we want to import
@@ -124,7 +139,9 @@ var AES = function () {
   }, {
     key: 'importKeyRaw',
     value: function importKeyRaw(key) {
-      return crypto.subtle.importKey('raw', key, {
+      var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'raw';
+
+      return crypto.subtle.importKey(type, key, {
         name: this.mode
       }, true, ['encrypt', 'decrypt']);
     }

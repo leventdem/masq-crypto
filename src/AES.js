@@ -71,7 +71,7 @@ const encryptBuffer = (data, key, cipherContext) => {
  * @param {string} [params.additionalData] - The authenticated data, only for aes-gcm mode.
  */
 class AES {
-  constructor(params) {
+  constructor (params) {
     this.mode = params.mode || 'aes-gcm'
     this.keySize = params.keySize || 128
     this.IV = params.iv || null
@@ -80,11 +80,11 @@ class AES {
     this.additionalData = params.additionalData || ''
   }
 
-  get additionalData() {
+  get additionalData () {
     return this._additionalData
   }
 
-  set additionalData(newAdditionalData) {
+  set additionalData (newAdditionalData) {
     if (typeof newAdditionalData === 'string') {
       this._additionalData = newAdditionalData
     } else {
@@ -100,44 +100,53 @@ class AES {
  * @param {obj} obj - Save this in obj
  * @returns {CryptoKey|arrayBuffer} - The CryptoKey
  */
-  checkRaw(obj, key) {
+  checkRaw (obj, key) {
     return new Promise(function (resolve, reject) {
       if (key instanceof Uint8Array) {
         obj.importKeyRaw(key)
           .then(resolve)
           .catch(err => console.log(err))
-      }
-      else {
+      } else {
         resolve(key)
       }
     })
   }
 
   /**
-  * Transform a raw key into a CryptoKey
+  * Transform a CryptoKey into a raw key
   *
-  * @param {arrayBuffer} key - The key we want to import
-  * @returns {CryptoKey} - The CryptoKey
+  * @param {CryptoKey} key - The CryptoKey
+  * @returns {arrayBuffer} - The raw key
   */
-  importKeyRaw(key) {
-    return crypto.subtle.importKey('raw', key, {
+  exportKeyRaw (key, type = 'raw') {
+    return crypto.subtle.exportKey(type, key)
+  }
+
+  /**
+* Transform a raw key into a CryptoKey
+*
+* @param {arrayBuffer} key - The key we want to import
+* @returns {CryptoKey} - The CryptoKey
+*/
+  importKeyRaw (key, type = 'raw') {
+    return crypto.subtle.importKey(type, key, {
       name: this.mode
     }, true, ['encrypt', 'decrypt'])
   }
 
-  get key() {
+  get key () {
     return this._key
   }
 
-  set key(newKey) {
+  set key (newKey) {
     this._key = newKey
   }
 
-  get mode() {
+  get mode () {
     return this._mode
   }
 
-  set mode(newMode) {
+  set mode (newMode) {
     if (acceptedMode.includes(newMode)) {
       this._mode = newMode
     } else {
@@ -148,11 +157,11 @@ class AES {
     }
   }
 
-  get keySize() {
+  get keySize () {
     return this._keySize
   }
 
-  set keySize(newKeySize) {
+  set keySize (newKeySize) {
     if (acceptedKeySize.includes(newKeySize)) {
       this._keySize = newKeySize
     } else {
@@ -173,7 +182,7 @@ class AES {
   * @param {hexString} [input.version] - The additionnal data for aes-gcm mode
   * @returns {string} - The decrypted input
   */
-  decrypt(input) {
+  decrypt (input) {
     // Prepare context, all modes have at least one property : ciphertext
     let context = {}
     let cipherContext = {}
@@ -224,7 +233,7 @@ class AES {
     }
   }
 
-    /**
+  /**
   * Eecrypt the given input. All cipher context information
   * have been initialized at object creation (as default or as parameter)
   * If the input is an ohas to be stringified
@@ -232,7 +241,7 @@ class AES {
   * @param {string} input - The plaintext
   * @returns {object} - The encrypted input with additional cipher information (e.g. iv)
   */
-  encrypt(input) {
+  encrypt (input) {
     // all modes have at least the plaintext
     let context = {}
     let cipherContext = {}
@@ -305,7 +314,7 @@ class AES {
    *
    * @returns {CryptoKey} - The generated AES key.
    */
-  genAESKey() {
+  genAESKey () {
     return crypto.subtle.generateKey({
       name: this.mode || 'aes-gcm',
       length: this.keySize || 128
