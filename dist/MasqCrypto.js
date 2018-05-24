@@ -866,7 +866,7 @@ var hexStringToBuffer = function hexStringToBuffer(hexString) {
 var deriveKey = function deriveKey(passPhrase, salt) {
   var iterations = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 10000;
 
-  // Always specify a strong salt 
+  // Always specify a strong salt
   if (iterations < 10000) {
     console.log('The iteration number is less than 10000, increase it !');
   }
@@ -880,6 +880,25 @@ var deriveKey = function deriveKey(passPhrase, salt) {
     }, baseKey, 128);
   }).then(function (derivedKey) {
     return new Uint8Array(derivedKey);
+  }).catch(function (err) {
+    return console.log(err);
+  });
+};
+
+/**
+ * Hash of a string or arrayBuffer
+ *
+ * @param {string | arrayBuffer} msg The message
+ * @param {string} [type] The hash name (SHA-256 by default)
+ * @returns {Promise}   A promise that contains the hash as a Uint8Array
+ */
+var hash = function hash(msg) {
+  var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'SHA-256';
+
+  return window.crypto.subtle.digest({
+    name: 'SHA-256'
+  }, typeof passPhrase === 'string' ? toArray(msg) : msg).then(function (digest) {
+    return new Uint8Array(digest);
   }).catch(function (err) {
     return console.log(err);
   });
@@ -910,7 +929,8 @@ module.exports = {
   toString: toString,
   hexStringToBuffer: hexStringToBuffer,
   deriveKey: deriveKey,
-  randomString: randomString
+  randomString: randomString,
+  hash: hash
 };
 },{}]},{},[4])(4)
 });
