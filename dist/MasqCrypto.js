@@ -126,7 +126,11 @@ var AES = function () {
     value: function exportKeyRaw(key) {
       var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'raw';
 
-      return crypto.subtle.exportKey(type, key);
+      return crypto.subtle.exportKey(type, key).then(function (key) {
+        return new Uint8Array(key);
+      }).catch(function (err) {
+        return console.log(err);
+      });
     }
 
     /**
@@ -208,9 +212,9 @@ var AES = function () {
     }
 
     /**
-    * Eecrypt the given input. All cipher context information
+    * Encrypt the given input. All cipher context information
     * have been initialized at object creation (as default or as parameter)
-    * If the input is an ohas to be stringified
+    * If the input is an object, it has to be stringified
     *
     * @param {string} input - The plaintext
     * @returns {object} - The encrypted input with additional cipher information (e.g. iv)
