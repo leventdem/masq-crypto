@@ -133,7 +133,7 @@ class AES {
   importKeyRaw (key, type = 'raw') {
     return crypto.subtle.importKey(type, key, {
       name: this.mode
-    }, true, ['encrypt', 'decrypt'])
+    }, true, ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey'])
   }
 
   get key () {
@@ -321,6 +321,70 @@ class AES {
       name: this.mode || 'aes-gcm',
       length: this.keySize || 128
     }, true, ['decrypt', 'encrypt'])
+  }
+
+  /**
+  * Wrap the given key. All cipher context information of the wrapping key
+  * have been initialized at object creation (default or parameter)
+  * Return the wrappedKey and the associated iv.
+  *
+  * @param {CryptoKey} toBeWrappedKey - The key we want to wrap
+  * @param {string} exportType - The export format of the toBeWrappedKey
+  * @returns {Uint8Array} - The wrapped key
+  */
+  wrapKey (toBeWrappedKey, exportType) {
+    let iv = window.crypto.getRandomValues(new Uint8Array(12))
+    let self = this
+    return this.checkRaw(self, this.key)
+      .then(instanceKey => {
+        return crypto.subtle.wrapKey(exportType || 'raw',
+          toBeWrappedKey,
+          instanceKey,
+          {
+            name: this.mode || 'aes-gcm',
+            iv: iv,
+            additionalData: utils.toArray('')
+          })
+      })
+      .then(wrappedKey => {
+        return {
+          encryptedMasterKey: new Uint8Array(wrappedKey),
+          iv: iv
+        }
+      })
+      .catch(err => console.log(err))
+  }
+
+  /**
+  * Unwrap the given key. All cipher context information of the wrapping key
+  * have been initialized at object creation (default or parameter)
+  *
+  * @param {Uint8array} wrappedKey - The wrapped key
+  * @param {Uint8Array} iv - The iv
+  * @param {string} [importType] - The import format of the wrappedKey, must be the same as in wrap.
+  * @returns {CryptoKey} - The decrypted input
+  */
+  unwrapKey (wrappedKey, iv, importType) {
+    let self = this
+
+    return this.checkRaw(self, this.key)
+      .then(instanceKey => {
+        return crypto.subtle.unwrapKey(importType || 'raw',
+          wrappedKey,
+          instanceKey,
+          {
+            name: this.mode || 'aes-gcm',
+            iv: iv,
+            additionalData: utils.toArray('')
+          },
+          {
+            name: this.mode || 'aes-gcm',
+            length: 128
+          },
+          true,
+          ['encrypt', 'decrypt'])
+      })
+      .catch(err => console.log(err))
   }
 }
 module.exports.AES = AES

@@ -147,7 +147,7 @@ var AES = function () {
 
       return crypto.subtle.importKey(type, key, {
         name: this.mode
-      }, true, ['encrypt', 'decrypt']);
+      }, true, ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey']);
     }
   }, {
     key: 'decrypt',
@@ -294,6 +294,70 @@ var AES = function () {
         name: this.mode || 'aes-gcm',
         length: this.keySize || 128
       }, true, ['decrypt', 'encrypt']);
+    }
+
+    /**
+    * Wrap the given key. All cipher context information of the wrapping key
+    * have been initialized at object creation (default or parameter)
+    * Return the wrappedKey and the associated iv.
+    *
+    * @param {CryptoKey} toBeWrappedKey - The key we want to wrap
+    * @param {string} exportType - The export format of the toBeWrappedKey
+    * @returns {Uint8Array} - The wrapped key
+    */
+
+  }, {
+    key: 'wrapKey',
+    value: function wrapKey(toBeWrappedKey, exportType) {
+      var _this = this;
+
+      var iv = window.crypto.getRandomValues(new Uint8Array(12));
+      var self = this;
+      return this.checkRaw(self, this.key).then(function (instanceKey) {
+        return crypto.subtle.wrapKey(exportType || 'raw', toBeWrappedKey, instanceKey, {
+          name: _this.mode || 'aes-gcm',
+          iv: iv,
+          additionalData: utils.toArray('')
+        });
+      }).then(function (wrappedKey) {
+        return {
+          encryptedMasterKey: new Uint8Array(wrappedKey),
+          iv: iv
+        };
+      }).catch(function (err) {
+        return console.log(err);
+      });
+    }
+
+    /**
+    * Unwrap the given key. All cipher context information of the wrapping key
+    * have been initialized at object creation (default or parameter)
+    *
+    * @param {Uint8array} wrappedKey - The wrapped key
+    * @param {Uint8Array} iv - The iv
+    * @param {string} [importType] - The import format of the wrappedKey, must be the same as in wrap.
+    * @returns {CryptoKey} - The decrypted input
+    */
+
+  }, {
+    key: 'unwrapKey',
+    value: function unwrapKey(wrappedKey, iv, importType) {
+      var _this2 = this;
+
+      var self = this;
+
+      return this.checkRaw(self, this.key).then(function (instanceKey) {
+        return crypto.subtle.unwrapKey(importType || 'raw', wrappedKey, instanceKey, {
+          name: _this2.mode || 'aes-gcm',
+          iv: iv,
+          additionalData: utils.toArray('')
+        }, {
+          name: _this2.mode || 'aes-gcm',
+          length: 128
+        }, true, ['encrypt', 'decrypt']);
+      }).catch(function (err) {
+        return console.log(err);
+      });
     }
   }, {
     key: 'additionalData',
