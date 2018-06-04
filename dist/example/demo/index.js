@@ -44,6 +44,24 @@ document.addEventListener('DOMContentLoaded', function () {
       ecdh();
     });
   }
+  el = document.getElementById('masterKey');
+  if (el) {
+    el.addEventListener('click', function (e) {
+      masterKey();
+    });
+  }
+  el = document.getElementById('wrap');
+  if (el) {
+    el.addEventListener('click', function (e) {
+      wrap();
+    });
+  }
+  el = document.getElementById('unwrap');
+  if (el) {
+    el.addEventListener('click', function (e) {
+      unwrap();
+    });
+  }
 });
 
 var apiData = {
@@ -144,6 +162,55 @@ var derive = function derive() {
     console.log('Salt : ', MasqCrypto.utils.toArray('theSalt'));
     console.log('Iterations : ', iterations);
     console.log('Derived Key : ', derivedKey);
+  }).catch(function (err) {
+    return console.log(err);
+  });
+};
+
+var masterKey = function masterKey() {
+  // We create an AES object with some paramters
+  var salt = Uint8Array.from([126, 252, 235, 252, 60, 233, 252, 81, 130, 147, 61, 241, 179, 85, 95, 23]);
+  console.log(salt);
+  MasqCrypto.utils.deriveKey('helloboys', salt).then(function (key) {
+    console.log(key);
+
+    var enc = { ciphertext: 'e3a2dc349a79bbab0e823984a66418ab66c2', iv: 'e9d86958f35ff31f78a5ae43', version: '' };
+    var cipherAES = new MasqCrypto.AES({ key: key });
+    cipherAES.decrypt(enc).then(function (res) {
+      console.log(res);
+    });
+  });
+};
+var resOfWrapKey = null;
+var wrap = function wrap() {
+  console.log('1.0');
+  var salt = Uint8Array.from([126, 252, 235, 252, 60, 233, 252, 81, 130, 147, 61, 241, 179, 85, 95, 23]);
+  MasqCrypto.utils.deriveKey('hello', salt).then(function (key) {
+    console.log(key);
+    var cipherAES = new MasqCrypto.AES({ key: key });
+    cipherAES.genAESKey().then(function (aesKey) {
+      console.log(aesKey);
+      cipherAES.wrapKey(aesKey, 'raw').then(function (res) {
+        console.log(res);
+        cipherAES.unwrapKey(res.encryptedMasterKey, res.iv, 'raw').then(function (unwrapped) {
+          console.log(unwrapped);
+          resOfWrapKey = res;
+        });
+      });
+    });
+  });
+};
+
+var unwrap = function unwrap() {
+  console.log('2.0');
+  var salt = Uint8Array.from([126, 252, 235, 252, 60, 233, 252, 81, 130, 147, 61, 241, 179, 85, 95, 23]);
+  MasqCrypto.utils.deriveKey('hello', salt).then(function (key) {
+    var cipherAES = new MasqCrypto.AES({ key: key });
+    cipherAES.unwrapKey(resOfWrapKey.encryptedMasterKey, resOfWrapKey.iv, 'raw').then(function (unwrapped) {
+      console.log(unwrapped);
+    }).catch(function (err) {
+      return console.log(err);
+    });
   }).catch(function (err) {
     return console.log(err);
   });

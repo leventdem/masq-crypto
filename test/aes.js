@@ -1,6 +1,5 @@
 // To avoid error on import please specify the default export in the imported class
 // with export default <className> instead of export {className as default}
-
 const should = chai.should()
 
 const keys = []

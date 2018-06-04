@@ -19,7 +19,7 @@ describe('MasqCrypto utils', function () {
         .then(derivedKey => {
           should.exist(derivedKey, 'derivedKey is empty')
           chai.assert.lengthOf(derivedKey, 16, 'Default length is 16 bytes (128 bits)')
-          chai.assert(derivedKey instanceof Uint8Array, true, 'DerivedKey is not an array');
+          chai.assert(derivedKey instanceof Uint8Array, true, 'DerivedKey is not an array')
         })
         .then(done, done)
     })
@@ -28,7 +28,7 @@ describe('MasqCrypto utils', function () {
         .then(derivedKey => {
           should.exist(derivedKey, 'derivedKey is empty')
           chai.assert.lengthOf(derivedKey, 16, 'Default length is 16 bytes (128 bits)')
-          chai.assert(derivedKey instanceof Uint8Array, true, 'DerivedKey is not an array');
+          chai.assert(derivedKey instanceof Uint8Array, true, 'DerivedKey is not an array')
         })
         .then(done, done)
     })
@@ -37,10 +37,10 @@ describe('MasqCrypto utils', function () {
         .then(derivedKey => {
           should.exist(derivedKey, 'derivedKey is empty')
           chai.assert.lengthOf(derivedKey, 16, 'Default length is 16 bytes (128 bits)')
-          chai.assert(derivedKey instanceof Uint8Array, true, 'DerivedKey is not an array');
+          chai.assert(derivedKey instanceof Uint8Array, true, 'DerivedKey is not an array')
         })
         .then(done, done)
-    }) 
+    })
     it('Key derivation PBKDF2, check derived key value', done => {
       MasqCrypto.utils.deriveKey('myPassphrase')
         .then(derivedKey => {

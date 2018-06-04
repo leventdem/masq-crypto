@@ -10,7 +10,6 @@ describe('MasqCrypto EC', function () {
   var ecKeys = []
 
   context('Key generations', () => {
-
     // Keys
     KEYS.forEach(key => {
       // namedCurve
@@ -47,9 +46,8 @@ describe('MasqCrypto EC', function () {
       })
     })
 
-    context("Derive key", () => {
-
-      ecKeys.filter(key => key.usages.some(usage => usage === "deriveKey"))
+    context('Derive key', () => {
+      ecKeys.filter(key => key.usages.some(usage => usage === 'deriveKey'))
         .forEach(key => {
           // AES alg
           [MasqCrypto.aesModes.CBC, MasqCrypto.aesModes.GCM].forEach(aesAlg => {
@@ -89,7 +87,7 @@ describe('MasqCrypto EC', function () {
                 aliceEC.deriveKeyECDH(BobECPubKey, MasqCrypto.aesModes.GCM, 128).then(AESKeyAlice => {
                   bobEC.importKeyRaw(aliceawKey).then(AliceECPubKey => {
                     bobEC.deriveKeyECDH(AliceECPubKey, 'aes-gcm', 128).then(AESKeyBob => {
-                      //console.log(AESKeyAlice, AESKeyBob)
+                      // console.log(AESKeyAlice, AESKeyBob)
                       chai.assert.deepEqual(AESKeyAlice, AESKeyBob, 'Both derived symmetric key do not match')
                     }).then(done, done)
                   })
@@ -100,5 +98,5 @@ describe('MasqCrypto EC', function () {
         })
       })
     })
-  })  
+  })
 })
