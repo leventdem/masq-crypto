@@ -32,7 +32,7 @@ var acceptedMode = ['aes-cbc', 'aes-gcm', 'aes-ctr'];
 var acceptedKeySize = [128, 192, 256];
 
 /**
- * Decrypt data with AES-GCM cipher
+ * Decrypt data
  *
  * @param {ArrayBuffer} data - Data to decrypt
  * @param {ArrayBuffer} key - The AES key as raw data. 128 or 256 bits
@@ -51,7 +51,7 @@ var decryptBuffer = function decryptBuffer(data, key, cipherContext) {
 };
 
 /**
- * Encrypt data with AES-GCM cipher
+ * Encrypt data
  *
  * @param {ArrayBuffer} data - Data to encrypt
  * @param {ArrayBuffer} key - The AES CryptoKey
@@ -153,7 +153,7 @@ var AES = function () {
 
 
     /**
-    * Decrypt the given input. All cipher context infomrmation
+    * Decrypt the given input. All cipher context information
     * have been initialized at object creation (default or parameter)
     *
     * @param {object} input - The ciphertext and associated decryption data
@@ -234,8 +234,8 @@ var AES = function () {
         // Prepare cipher context, depends on cipher mode
         cipherContext.name = this.mode;
         cipherContext.iv = context.iv;
-        // This function test the given key and return the Cryptokey
         cipherContext.additionalData = context.additionalData;
+        // This function tests the given key and return the Cryptokey
         return this.checkRaw(self, this.key).then(function (key) {
           return encryptBuffer(context.plaintext, key, cipherContext);
         }).then(function (result) {
@@ -281,7 +281,7 @@ var AES = function () {
 
     /**
      * Generate an AES key based on the cipher mode and keysize
-     * Cipher mode and keys are initialized at cipher AES instance creation.
+     * Cipher mode and key size are initialized at cipher AES instance creation.
      *
      * @returns {CryptoKey} - The generated AES key.
      */
@@ -301,13 +301,14 @@ var AES = function () {
     * Return the wrappedKey and the associated iv.
     *
     * @param {CryptoKey} toBeWrappedKey - The key we want to wrap
-    * @param {string} exportType - The export format of the toBeWrappedKey
+    * @param {string} [keySize] - The size of the key we want to wrap
+    * @param {string} [exportType] - The export format of the toBeWrappedKey
     * @returns {Uint8Array} - The wrapped key
     */
 
   }, {
     key: 'wrapKey',
-    value: function wrapKey(toBeWrappedKey, exportType) {
+    value: function wrapKey(toBeWrappedKey, keySize, exportType) {
       var _this = this;
 
       var iv = window.crypto.getRandomValues(new Uint8Array(12));
@@ -321,11 +322,10 @@ var AES = function () {
       }).then(function (wrappedKey) {
         return {
           encryptedMasterKey: new Uint8Array(wrappedKey),
-          iv: iv
+          iv: iv,
+          keySize: keySize || 128
         };
-      }).catch(function (err) {
-        return console.log(err);
-      });
+      }).catch(logFail);
     }
 
     /**
@@ -334,13 +334,14 @@ var AES = function () {
     *
     * @param {Uint8array} wrappedKey - The wrapped key
     * @param {Uint8Array} iv - The iv
+    * @param {Uint8Array} keySize - The size of the unwrapped key (same as before wrapping)
     * @param {string} [importType] - The import format of the wrappedKey, must be the same as in wrap.
     * @returns {CryptoKey} - The decrypted input
     */
 
   }, {
     key: 'unwrapKey',
-    value: function unwrapKey(wrappedKey, iv, importType) {
+    value: function unwrapKey(wrappedKey, iv, keySize, importType) {
       var _this2 = this;
 
       var self = this;
@@ -352,7 +353,7 @@ var AES = function () {
           additionalData: utils.toArray('')
         }, {
           name: _this2.mode || 'aes-gcm',
-          length: 128
+          length: keySize || 128
         }, true, ['encrypt', 'decrypt']);
       }).catch(function (err) {
         return console.log(err);
