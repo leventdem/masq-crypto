@@ -25,7 +25,7 @@ const acceptedMode = [
 const acceptedKeySize = [128, 192, 256]
 
 /**
- * Decrypt data with AES-GCM cipher
+ * Decrypt data
  *
  * @param {ArrayBuffer} data - Data to decrypt
  * @param {ArrayBuffer} key - The AES key as raw data. 128 or 256 bits
@@ -44,7 +44,7 @@ const decryptBuffer = (data, key, cipherContext) => {
 }
 
 /**
- * Encrypt data with AES-GCM cipher
+ * Encrypt data
  *
  * @param {ArrayBuffer} data - Data to encrypt
  * @param {ArrayBuffer} key - The AES CryptoKey
@@ -101,7 +101,7 @@ class AES {
  * @returns {CryptoKey|arrayBuffer} - The CryptoKey
  */
   checkRaw (obj, key) {
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
       if (key instanceof Uint8Array) {
         obj.importKeyRaw(key)
           .then(resolve)
@@ -175,7 +175,7 @@ class AES {
   }
 
   /**
-  * Decrypt the given input. All cipher context infomrmation
+  * Decrypt the given input. All cipher context information
   * have been initialized at object creation (default or parameter)
   *
   * @param {object} input - The ciphertext and associated decryption data
@@ -256,8 +256,8 @@ class AES {
       // Prepare cipher context, depends on cipher mode
       cipherContext.name = this.mode
       cipherContext.iv = context.iv
-      // This function test the given key and return the Cryptokey
       cipherContext.additionalData = context.additionalData
+      // This function tests the given key and return the Cryptokey
       return this.checkRaw(self, this.key)
         .then(key => {
           return encryptBuffer(context.plaintext, key, cipherContext)
@@ -312,7 +312,7 @@ class AES {
 
   /**
    * Generate an AES key based on the cipher mode and keysize
-   * Cipher mode and keys are initialized at cipher AES instance creation.
+   * Cipher mode and key size are initialized at cipher AES instance creation.
    *
    * @returns {CryptoKey} - The generated AES key.
    */
@@ -329,10 +329,11 @@ class AES {
   * Return the wrappedKey and the associated iv.
   *
   * @param {CryptoKey} toBeWrappedKey - The key we want to wrap
-  * @param {string} exportType - The export format of the toBeWrappedKey
+  * @param {string} [keySize] - The size of the key we want to wrap
+  * @param {string} [exportType] - The export format of the toBeWrappedKey
   * @returns {Uint8Array} - The wrapped key
   */
-  wrapKey (toBeWrappedKey, exportType) {
+  wrapKey (toBeWrappedKey, keySize, exportType) {
     let iv = window.crypto.getRandomValues(new Uint8Array(12))
     let self = this
     return this.checkRaw(self, this.key)
@@ -349,10 +350,11 @@ class AES {
       .then(wrappedKey => {
         return {
           encryptedMasterKey: new Uint8Array(wrappedKey),
-          iv: iv
+          iv: iv,
+          keySize: keySize || 128
         }
       })
-      .catch(err => console.log(err))
+      .catch(logFail)
   }
 
   /**
@@ -361,10 +363,11 @@ class AES {
   *
   * @param {Uint8array} wrappedKey - The wrapped key
   * @param {Uint8Array} iv - The iv
+  * @param {Uint8Array} keySize - The size of the unwrapped key (same as before wrapping)
   * @param {string} [importType] - The import format of the wrappedKey, must be the same as in wrap.
   * @returns {CryptoKey} - The decrypted input
   */
-  unwrapKey (wrappedKey, iv, importType) {
+  unwrapKey (wrappedKey, iv, keySize, importType) {
     let self = this
 
     return this.checkRaw(self, this.key)
@@ -379,7 +382,7 @@ class AES {
           },
           {
             name: this.mode || 'aes-gcm',
-            length: 128
+            length: keySize || 128
           },
           true,
           ['encrypt', 'decrypt'])

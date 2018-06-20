@@ -355,4 +355,39 @@ describe('MasqCrypto AES', () => {
         })
     })
   })
+  context('Wrap/Unwrap a key', () => {
+    context('AES-GCM', () => {
+      // Filter GCM
+      keys.filter(key => /aes-gcm/.test(key.name))
+        .forEach(key => {
+          // console.log(message.data)
+          it(`\t${key.name}`, done => {
+            var alg = {
+              name: MasqCrypto.aesModes.GCM
+            }
+            // We create an AES object with some paramters
+            const myAES = new MasqCrypto.AES(
+              {
+                mode: alg.name,
+                key: key.key,
+                keySize: key.keySize
+              }
+            )
+            myAES.genAESKey().then(aesKey => {
+              myAES.exportKeyRaw(aesKey).then(raw => {
+                myAES.wrapKey(aesKey, 'raw').then(res => {
+                  should.exist(res, 'Wrapped key')
+                  myAES.unwrapKey(res.encryptedMasterKey, res.iv, res.keySize, 'raw').then(unwrapped => {
+                    myAES.exportKeyRaw(unwrapped).then(rawUnwrap => {
+                      chai.assert(raw, rawUnwrap, 'Unwrapped key does not correspond to original key')
+                    })
+                  })
+                })
+              })
+            })
+              .then(done, done)
+          })
+        })
+    })
+  })
 })
