@@ -143,6 +143,36 @@ var randomString = function randomString() {
   return result;
 };
 
+/**
+   * Generate an AES key based on the cipher mode and keysize
+   *
+   * @returns {CryptoKey} - The generated AES key.
+   */
+var genAESKey = function genAESKey() {
+  var mode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'aes-gcm';
+  var keySize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 128;
+
+  return crypto.subtle.generateKey({
+    name: mode,
+    length: keySize
+  }, true, ['decrypt', 'encrypt']);
+};
+/**
+   * Generate an AES key based on the cipher mode and keysize
+   *
+   * @returns {CryptoKey} - The generated AES key.
+   */
+var genAESKeyRaw = function genAESKeyRaw() {
+  var mode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'aes-gcm';
+  var keySize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 128;
+
+  return genAESKey(mode, keySize).then(function (key) {
+    return crypto.subtle.exportKey('raw', key).then(function (key) {
+      return new Uint8Array(key);
+    });
+  });
+};
+
 module.exports = {
   toArray: toArray,
   bufferToHexString: bufferToHexString,
@@ -150,5 +180,7 @@ module.exports = {
   hexStringToBuffer: hexStringToBuffer,
   deriveKey: deriveKey,
   randomString: randomString,
-  hash: hash
+  hash: hash,
+  genAESKey: genAESKey,
+  genAESKeyRaw: genAESKeyRaw
 };

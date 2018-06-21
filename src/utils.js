@@ -137,6 +137,29 @@ const randomString = (length = 18) => {
   return result
 }
 
+/**
+   * Generate an AES key based on the cipher mode and keysize
+   *
+   * @returns {CryptoKey} - The generated AES key.
+   */
+const genAESKey = (mode = 'aes-gcm', keySize = 128) => {
+  return crypto.subtle.generateKey({
+    name: mode,
+    length: keySize
+  }, true, ['decrypt', 'encrypt'])
+}
+/**
+   * Generate an AES key based on the cipher mode and keysize
+   *
+   * @returns {CryptoKey} - The generated AES key.
+   */
+const genAESKeyRaw = (mode = 'aes-gcm', keySize = 128) => {
+  return genAESKey(mode, keySize).then(key => {
+    return crypto.subtle.exportKey('raw', key)
+      .then(key => new Uint8Array(key))
+  })
+}
+
 module.exports = {
   toArray: toArray,
   bufferToHexString: bufferToHexString,
@@ -144,5 +167,7 @@ module.exports = {
   hexStringToBuffer: hexStringToBuffer,
   deriveKey: deriveKey,
   randomString: randomString,
-  hash: hash
+  hash: hash,
+  genAESKey: genAESKey,
+  genAESKeyRaw: genAESKeyRaw
 }
