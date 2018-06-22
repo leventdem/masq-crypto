@@ -2,7 +2,7 @@
 // with export default <className> instead of export {className as default}
 const should = chai.should()
 
-const keys = []
+let keys = []
 
 describe('MasqCrypto AES', () => {
   // EXAMPLE
@@ -194,8 +194,8 @@ describe('MasqCrypto AES', () => {
         })
     })
   })
-  keys.length = 0
   context('Generate key with webCryptoAPI random generator aka raw keys', () => {
+    keys = []
     // Keys
     KEYS.forEach(key => {
       // length (192 bits is not supported)

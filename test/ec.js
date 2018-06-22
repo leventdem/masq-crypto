@@ -1,21 +1,18 @@
 const ecKeys = []
+const KEYS = [
+  { alg: 'ECDH', usages: ['deriveKey', 'deriveBits'] }
+]
+const DIGEST = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512']
+const NAMED_CURVES = ['P-256', 'P-384', 'P-521']
 
 describe('MasqCrypto EC', function () {
-  var KEYS = [
-    { alg: 'ECDH', usages: ['deriveKey', 'deriveBits'] }
-  ]
-  var DIGEST = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512']
-  var NAMED_CURVES = ['P-256', 'P-384', 'P-521']
-
-  var ecKeys = []
-
   context('Key generations', () => {
     // Keys
     KEYS.forEach(key => {
       // namedCurve
       NAMED_CURVES.forEach(namedCurve => {
-        var keyName = `${key.alg} crv:${namedCurve}`
-        var keyTemplate = {
+        const keyName = `${key.alg} crv:${namedCurve}`
+        const keyTemplate = {
           name: keyName,
           privateKey: null,
           publicKey: null,
