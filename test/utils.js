@@ -1,3 +1,6 @@
+/* global chai, MasqCrypto */
+const should = chai.should()
+
 describe('MasqCrypto utils', function () {
   context('Data conversion functions', () => {
     it('toString <-> toArray', () => {

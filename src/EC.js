@@ -1,3 +1,4 @@
+/* global crypto */
 
 /**
  * Print error messages
@@ -161,8 +162,8 @@ class EC {
    */
   importKeyRaw (key, curve, algName) {
     return crypto.subtle.importKey('raw', key, {
-      name: algName ||  this.name,
-      namedCurve: curve ||  this.curve
+      name: algName || this.name,
+      namedCurve: curve || this.curve
     }, true, [])
   }
 

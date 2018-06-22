@@ -1,3 +1,5 @@
+/* global crypto */
+
 /**
  * Convert ascii to ArrayBufffer
  * ex : "bonjour" -> Uint8Array [ 98, 111, 110, 106, 111, 117, 114 ]

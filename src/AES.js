@@ -1,5 +1,5 @@
+/* global crypto */
 import * as utils from './utils.js'
-// @ts-check
 
 /**
  * Print error messages

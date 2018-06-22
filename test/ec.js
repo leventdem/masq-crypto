@@ -1,8 +1,10 @@
+/* global MasqCrypto, chai */
+const should = chai.should()
+
 const ecKeys = []
 const KEYS = [
   { alg: 'ECDH', usages: ['deriveKey', 'deriveBits'] }
 ]
-const DIGEST = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512']
 const NAMED_CURVES = ['P-256', 'P-384', 'P-521']
 
 describe('MasqCrypto EC', function () {
