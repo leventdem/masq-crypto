@@ -9,11 +9,11 @@ let keys = []
 describe('MasqCrypto AES', () => {
   // EXAMPLE
   let BIG_MESSAGE = ''
-  let i = 0
-  while (i++ < 10) {
+  for (let i = 0; i < 10; i++) {
     BIG_MESSAGE += '0123456789'
   }
-  let SMALL_MESSAGE = {
+
+  const SMALL_MESSAGE = {
     POI_1: 'Tour eiffel',
     POI_2: 'Bastille',
     POI_3: 'Cafeteria'
@@ -59,15 +59,12 @@ describe('MasqCrypto AES', () => {
     })
   })
 
-  // console.log(keys)
-
   context('Encrypt/Decrypt with CryptoKey as input', () => {
     context('AES-CBC', () => {
       // Filter CBC
       keys.filter(key => /aes-cbc/.test(key.name))
         .forEach(key => {
           messages.forEach(message => {
-            // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
                 name: MasqCrypto.aesModes.CBC
@@ -82,12 +79,10 @@ describe('MasqCrypto AES', () => {
               )
               myAES.encrypt(JSON.stringify(message.data))
                 .then(encryptedJSON => {
-                  // console.log(encryptedJSON)
                   should.exist(encryptedJSON, 'Encrypted message is empty')
                   return myAES.decrypt(encryptedJSON)
                 })
                 .then(decryptedJSON => {
-                  // console.log(decryptedJSON)
                   chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
                 })
                 .then(done, done)
@@ -100,7 +95,6 @@ describe('MasqCrypto AES', () => {
       keys.filter(key => /aes-ctr/.test(key.name))
         .forEach(key => {
           messages.forEach(message => {
-            // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
                 name: MasqCrypto.aesModes.CTR
@@ -115,12 +109,10 @@ describe('MasqCrypto AES', () => {
               )
               myAES.encrypt(JSON.stringify(message.data))
                 .then(encryptedJSON => {
-                  // console.log(encryptedJSON)
                   should.exist(encryptedJSON, 'Encrypted message is empty')
                   return myAES.decrypt(encryptedJSON)
                 })
                 .then(decryptedJSON => {
-                  // console.log(decryptedJSON)
                   chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
                 })
                 .then(done, done)
@@ -133,7 +125,6 @@ describe('MasqCrypto AES', () => {
       keys.filter(key => /aes-gcm/.test(key.name))
         .forEach(key => {
           messages.forEach(message => {
-            // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
                 name: MasqCrypto.aesModes.GCM
@@ -149,12 +140,10 @@ describe('MasqCrypto AES', () => {
               )
               myAES.encrypt(JSON.stringify(message.data))
                 .then(encryptedJSON => {
-                  // console.log(encryptedJSON)
                   should.exist(encryptedJSON, 'Encrypted message is empty')
                   return myAES.decrypt(encryptedJSON)
                 })
                 .then(decryptedJSON => {
-                  // console.log(decryptedJSON)
                   chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
                 })
                 .then(done, done)
@@ -167,7 +156,6 @@ describe('MasqCrypto AES', () => {
       keys.filter(key => /aes-gcm/.test(key.name))
         .forEach(key => {
           messages.forEach(message => {
-            // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
                 name: MasqCrypto.aesModes.GCM
@@ -182,12 +170,10 @@ describe('MasqCrypto AES', () => {
               )
               myAES.encrypt(JSON.stringify(message.data))
                 .then(encryptedJSON => {
-                  // console.log(encryptedJSON)
                   should.exist(encryptedJSON, 'Encrypted message is empty')
                   return myAES.decrypt(encryptedJSON)
                 })
                 .then(decryptedJSON => {
-                  // console.log(decryptedJSON)
                   chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
                 })
                 .then(done, done)
@@ -219,14 +205,13 @@ describe('MasqCrypto AES', () => {
       })
     })
   })
-  // console.log(keys)
+
   context('Encrypt/Decrypt with raw keys as input', () => {
     context('AES-CBC', () => {
       // Filter CBC
       keys.filter(key => /aes-cbc/.test(key.name))
         .forEach(key => {
           messages.forEach(message => {
-            // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
                 name: MasqCrypto.aesModes.CBC
@@ -241,12 +226,10 @@ describe('MasqCrypto AES', () => {
               )
               myAES.encrypt(JSON.stringify(message.data))
                 .then(encryptedJSON => {
-                  // console.log(encryptedJSON)
                   should.exist(encryptedJSON, 'Encrypted message is empty')
                   return myAES.decrypt(encryptedJSON)
                 })
                 .then(decryptedJSON => {
-                  // console.log(decryptedJSON)
                   chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
                 })
                 .then(done, done)
@@ -259,7 +242,6 @@ describe('MasqCrypto AES', () => {
       keys.filter(key => /aes-ctr/.test(key.name))
         .forEach(key => {
           messages.forEach(message => {
-            // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
                 name: MasqCrypto.aesModes.CTR
@@ -274,12 +256,10 @@ describe('MasqCrypto AES', () => {
               )
               myAES.encrypt(JSON.stringify(message.data))
                 .then(encryptedJSON => {
-                  // console.log(encryptedJSON)
                   should.exist(encryptedJSON, 'Encrypted message is empty')
                   return myAES.decrypt(encryptedJSON)
                 })
                 .then(decryptedJSON => {
-                  // console.log(decryptedJSON)
                   chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
                 })
                 .then(done, done)
@@ -292,7 +272,6 @@ describe('MasqCrypto AES', () => {
       keys.filter(key => /aes-gcm/.test(key.name))
         .forEach(key => {
           messages.forEach(message => {
-            // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
                 name: MasqCrypto.aesModes.GCM
@@ -310,12 +289,10 @@ describe('MasqCrypto AES', () => {
               // myAES.additionalData = "1.0.0"
               myAES.encrypt(JSON.stringify(message.data))
                 .then(encryptedJSON => {
-                  // console.log(encryptedJSON)
                   should.exist(encryptedJSON, 'Encrypted message is empty')
                   return myAES.decrypt(encryptedJSON)
                 })
                 .then(decryptedJSON => {
-                  // console.log(decryptedJSON)
                   chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
                 })
                 .then(done, done)
@@ -328,7 +305,6 @@ describe('MasqCrypto AES', () => {
       keys.filter(key => /aes-gcm/.test(key.name))
         .forEach(key => {
           messages.forEach(message => {
-            // console.log(message.data)
             it(`${message.name} message \t${key.name}`, done => {
               var alg = {
                 name: MasqCrypto.aesModes.GCM
@@ -343,12 +319,10 @@ describe('MasqCrypto AES', () => {
               )
               myAES.encrypt(JSON.stringify(message.data))
                 .then(encryptedJSON => {
-                  // console.log(encryptedJSON)
                   should.exist(encryptedJSON, 'Encrypted message is empty')
                   return myAES.decrypt(encryptedJSON)
                 })
                 .then(decryptedJSON => {
-                  // console.log(decryptedJSON)
                   chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
                 })
                 .then(done, done)
@@ -362,7 +336,6 @@ describe('MasqCrypto AES', () => {
       // Filter GCM
       keys.filter(key => /aes-gcm/.test(key.name))
         .forEach(key => {
-          // console.log(message.data)
           it(`\t${key.name}`, done => {
             var alg = {
               name: MasqCrypto.aesModes.GCM
