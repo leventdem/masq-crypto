@@ -188,7 +188,6 @@ class AES {
     // Prepare context, all modes have at least one property : ciphertext
     let context = {}
     let cipherContext = {}
-    let self = this
     context.ciphertext = input.hasOwnProperty('ciphertext') ? utils.hexStringToBuffer(input.ciphertext) : ''
     if (this.mode === 'aes-gcm') {
       context.iv = input.hasOwnProperty('iv') ? utils.hexStringToBuffer(input.iv) : ''
@@ -199,7 +198,7 @@ class AES {
       cipherContext.iv = context.iv
       cipherContext.additionalData = context.additionalData
       // This function test the given key and return the Cryptokey
-      return this.checkRaw(self, this.key)
+      return this.checkRaw(this, this.key)
         .then(key => {
           return decryptBuffer(context.ciphertext, key, cipherContext)
         })
@@ -211,7 +210,7 @@ class AES {
       // Prepare cipher context, depends on cipher mode
       cipherContext.name = this.mode
       cipherContext.iv = context.iv
-      return this.checkRaw(self, this.key)
+      return this.checkRaw(this, this.key)
         .then(key => {
           return decryptBuffer(context.ciphertext, key, cipherContext)
         })
@@ -224,7 +223,7 @@ class AES {
       cipherContext.name = this.mode
       cipherContext.counter = context.iv
       cipherContext.length = this.length
-      return this.checkRaw(self, this.key)
+      return this.checkRaw(this, this.key)
         .then(key => {
           return decryptBuffer(context.ciphertext, key, cipherContext)
         })
@@ -247,7 +246,6 @@ class AES {
     // all modes have at least the plaintext
     let context = {}
     let cipherContext = {}
-    let self = this
     context.plaintext = utils.toArray(input)
     if (this.mode === 'aes-gcm') {
       // IV is 96 bits long === 12 bytes
@@ -258,7 +256,7 @@ class AES {
       cipherContext.iv = context.iv
       cipherContext.additionalData = context.additionalData
       // This function tests the given key and return the Cryptokey
-      return this.checkRaw(self, this.key)
+      return this.checkRaw(this, this.key)
         .then(key => {
           return encryptBuffer(context.plaintext, key, cipherContext)
         })
@@ -276,7 +274,7 @@ class AES {
       // Prepare cipher context, depends on cipher mode
       cipherContext.name = this.mode
       cipherContext.iv = context.iv
-      return this.checkRaw(self, this.key)
+      return this.checkRaw(this, this.key)
         .then(key => {
           return encryptBuffer(context.plaintext, key, cipherContext)
         })
@@ -294,7 +292,7 @@ class AES {
       cipherContext.name = this.mode
       cipherContext.counter = context.iv
       cipherContext.length = this.length
-      return this.checkRaw(self, this.key)
+      return this.checkRaw(this, this.key)
         .then(key => {
           return encryptBuffer(context.plaintext, key, cipherContext)
         })
@@ -335,8 +333,7 @@ class AES {
   */
   wrapKey (toBeWrappedKey, keySize, exportType) {
     let iv = window.crypto.getRandomValues(new Uint8Array(12))
-    let self = this
-    return this.checkRaw(self, this.key)
+    return this.checkRaw(this, this.key)
       .then(instanceKey => {
         return crypto.subtle.wrapKey(exportType || 'raw',
           toBeWrappedKey,
@@ -368,9 +365,7 @@ class AES {
   * @returns {CryptoKey} - The decrypted input
   */
   unwrapKey (wrappedKey, iv, keySize, importType) {
-    let self = this
-
-    return this.checkRaw(self, this.key)
+    return this.checkRaw(this, this.key)
       .then(instanceKey => {
         return crypto.subtle.unwrapKey(importType || 'raw',
           wrappedKey,
