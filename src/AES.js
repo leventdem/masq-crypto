@@ -93,6 +93,44 @@ class AES {
     }
   }
 
+  get key () {
+    return this._key
+  }
+
+  set key (newKey) {
+    this._key = newKey
+  }
+
+  get mode () {
+    return this._mode
+  }
+
+  set mode (newMode) {
+    if (acceptedMode.includes(newMode)) {
+      this._mode = newMode
+    } else {
+      console.log(newMode + ' is not accepted.')
+      console.log(`Accepted modes are ${acceptedMode.join(', ')}`)
+      console.log(`Default mode is 'aes-gcm'.`)
+      this._mode = 'aes-gcm'
+    }
+  }
+
+  get keySize () {
+    return this._keySize
+  }
+
+  set keySize (newKeySize) {
+    if (acceptedKeySize.includes(newKeySize)) {
+      this._keySize = newKeySize
+    } else {
+      console.log(newKeySize + ' is not accepted.')
+      console.log(`Accepted keySize are ${acceptedKeySize.join(', ')}`)
+      console.log(`Default keySize is '128'.`)
+      this._keySize = 128
+    }
+  }
+
   /**
  * Check the received key format (CryptoKey or raw key).
  * If raw, import the key and return the CryptoKey
@@ -134,44 +172,6 @@ class AES {
     return crypto.subtle.importKey(type, key, {
       name: this.mode
     }, true, ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey'])
-  }
-
-  get key () {
-    return this._key
-  }
-
-  set key (newKey) {
-    this._key = newKey
-  }
-
-  get mode () {
-    return this._mode
-  }
-
-  set mode (newMode) {
-    if (acceptedMode.includes(newMode)) {
-      this._mode = newMode
-    } else {
-      console.log(newMode + ' is not accepted.')
-      console.log(`Accepted modes are ${acceptedMode.join(', ')}`)
-      console.log(`Default mode is 'aes-gcm'.`)
-      this._mode = 'aes-gcm'
-    }
-  }
-
-  get keySize () {
-    return this._keySize
-  }
-
-  set keySize (newKeySize) {
-    if (acceptedKeySize.includes(newKeySize)) {
-      this._keySize = newKeySize
-    } else {
-      console.log(newKeySize + ' is not accepted.')
-      console.log(`Accepted keySize are ${acceptedKeySize.join(', ')}`)
-      console.log(`Default keySize is '128'.`)
-      this._keySize = 128
-    }
   }
 
   /**
