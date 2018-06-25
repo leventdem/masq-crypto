@@ -54,7 +54,6 @@ class RSA {
    * @returns {Promise} - The RSA key pair : publicKey and privateKey
    */
   genRSAKeyPair (modulusLength = 4096) {
-    let self = this
     return crypto.subtle.generateKey({
       name: 'RSA-PSS',
       modulusLength: modulusLength, // can be 1024, 2048, or 4096
@@ -64,8 +63,8 @@ class RSA {
       }
     }, false, ['sign', 'verify'])
       .then(cryptoKey => {
-        self.publicKey = cryptoKey.publicKey
-        self.privateKey = cryptoKey.privateKey
+        this.publicKey = cryptoKey.publicKey
+        this.privateKey = cryptoKey.privateKey
         return cryptoKey
       })
       .catch(logFail)

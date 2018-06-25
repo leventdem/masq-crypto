@@ -70,14 +70,13 @@ class EC {
    * @returns {CryptoKey} - The generated EC key Pair as CryptoKey
    */
   genECKeyPair () {
-    let self = this
     return crypto.subtle.generateKey({
       name: this.name,
       namedCurve: this.curve
     }, false, this.name === 'ECDH' ? ['deriveKey', 'deriveBits'] : ['sign', 'verify'])
       .then(cryptoKey => {
-        self.publicKey = cryptoKey.publicKey
-        self.privateKey = cryptoKey.privateKey
+        this.publicKey = cryptoKey.publicKey
+        this.privateKey = cryptoKey.privateKey
         return cryptoKey
       })
       .catch(err => {
