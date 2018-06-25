@@ -4,350 +4,171 @@
 // with export default <className> instead of export {className as default}
 const should = chai.should()
 
-let keys = []
+const KEYS = [
+  { alg: MasqCrypto.aesModes.GCM },
+  { alg: MasqCrypto.aesModes.CTR },
+  { alg: MasqCrypto.aesModes.CBC }
+]
+
+// EXAMPLE
+let BIG_MESSAGE = ''
+for (let i = 0; i < 10; i++) {
+  BIG_MESSAGE += '0123456789'
+}
+
+const SMALL_MESSAGE = {
+  POI_1: 'Tour eiffel',
+  POI_2: 'Bastille',
+  POI_3: 'Cafeteria'
+}
+const messages = [
+  { name: 'small', data: SMALL_MESSAGE },
+  { name: 'big', data: BIG_MESSAGE }
+]
+
+function testAlgo (message, key, alg, additionalData = undefined) {
+  it(`${message.name} message \t${key.name}`, done => {
+    // We create an AES object with some paramters
+    const myAES = new MasqCrypto.AES({
+      mode: alg.name,
+      key: key.key,
+      keySize: key.keySize,
+      additionalData: additionalData
+    })
+    // optional : we can add additionalData later
+    // myAES.additionalData = "1.0.0"
+    myAES.encrypt(JSON.stringify(message.data))
+      .then(encryptedJSON => {
+        should.exist(encryptedJSON, 'Encrypted message is empty')
+        return myAES.decrypt(encryptedJSON)
+      })
+      .then(decryptedJSON => {
+        chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
+      })
+      .then(done, done)
+  })
+}
 
 describe('MasqCrypto AES', () => {
-  // EXAMPLE
-  let BIG_MESSAGE = ''
-  for (let i = 0; i < 10; i++) {
-    BIG_MESSAGE += '0123456789'
-  }
+  describe('with AES key generator aka CryptoKey', () => {
+    let keys = []
 
-  const SMALL_MESSAGE = {
-    POI_1: 'Tour eiffel',
-    POI_2: 'Bastille',
-    POI_3: 'Cafeteria'
-  }
-  const messages = [
-    { name: 'small', data: SMALL_MESSAGE },
-    { name: 'big', data: BIG_MESSAGE }
-  ]
+    context('Generate key with AES key generator aka CryptoKey', () => {
+      // Keys
+      KEYS.forEach(key => {
+        // length (192 bits is not supported)
+        [128, 256].forEach(length => {
+          const keyName = `${key.alg} l:${length}`
+          const keyTemplate = { name: keyName, key: null, keySize: length }
+          keys.push(keyTemplate)
 
-  const KEYS = [
-    { alg: MasqCrypto.aesModes.GCM },
-    { alg: MasqCrypto.aesModes.CTR },
-    { alg: MasqCrypto.aesModes.CBC }
-  ]
+          it(keyName, done => {
+            const aesKey = new MasqCrypto.AES({ mode: key.alg, keySize: length })
+            aesKey.genAESKey()
+              .then(aesKey => {
+                should.exist(aesKey, 'Aes key is empty')
+                keyTemplate.key = aesKey
+              })
+              .then(done, done)
+          })
+        })
+      })
+    })
 
-  context('Generate key with AES key generator aka CryptoKey', () => {
-    // Keys
-    KEYS.forEach(key => {
-      // length (192 bits is not supported)
-      [128, 256].forEach(length => {
-        let keyName = `${key.alg} l:${length}`
-        var keyTemplate = {
-          name: keyName,
-          key: null,
-          keySize: length
-        }
-        keys.push(keyTemplate)
-        it(keyName, done => {
-          let aesKey = new MasqCrypto.AES(
-            {
-              mode: key.alg,
-              keySize: length
-            }
-          )
-          aesKey.genAESKey()
-            .then(aesKey => {
-              should.exist(aesKey, 'Aes key is empty')
-              keyTemplate.key = aesKey
+    context('Encrypt/Decrypt with CryptoKey as input', () => {
+      const algos = ['cbc', 'ctr', 'gcm']
+
+      algos.forEach(algo =>
+        context(`aes-${algo}`, () => {
+          const filteredKeys = keys.filter(key => RegExp(`aes-${algo}`).test(key.name))
+          const alg = { name: MasqCrypto.aesModes[algo.toUpperCase()] }
+          filteredKeys.forEach(key => {
+            messages.forEach(message => {
+              testAlgo(message, key, alg)
             })
-            .then(done, done)
+          })
+        })
+      )
+
+      context('AES-GCM with additionnal data : "1.0.0"', () => {
+        // Filter GCM
+        const gcmKeys = keys.filter(key => /aes-gcm/.test(key.name))
+        const alg = { name: MasqCrypto.aesModes.GCM }
+        gcmKeys.forEach(key => {
+          messages.forEach(message => {
+            testAlgo(message, key, alg, '1.0.0')
+          })
         })
       })
     })
   })
 
-  context('Encrypt/Decrypt with CryptoKey as input', () => {
-    context('AES-CBC', () => {
-      // Filter CBC
-      keys.filter(key => /aes-cbc/.test(key.name))
-        .forEach(key => {
-          messages.forEach(message => {
-            it(`${message.name} message \t${key.name}`, done => {
-              var alg = {
-                name: MasqCrypto.aesModes.CBC
-              }
-              // We create an AES object with some paramters
-              const myAES = new MasqCrypto.AES(
-                {
-                  mode: alg.name,
-                  key: key.key,
-                  keySize: key.keySize
-                }
-              )
-              myAES.encrypt(JSON.stringify(message.data))
-                .then(encryptedJSON => {
-                  should.exist(encryptedJSON, 'Encrypted message is empty')
-                  return myAES.decrypt(encryptedJSON)
-                })
-                .then(decryptedJSON => {
-                  chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
-                })
-                .then(done, done)
-            })
+  describe('with webCryptoAPI random generator aka raw keys', () => {
+    let keys = []
+    context('Generate key with webCryptoAPI random generator aka raw keys', () => {
+      keys = []
+      // Keys
+      KEYS.forEach(key => {
+        // length (192 bits is not supported)
+        [128, 256].forEach(length => {
+          const keyName = `${key.alg} l:${length}`
+          const keyTemplate = {
+            name: keyName,
+            key: null,
+            keySize: length
+          }
+          keys.push(keyTemplate)
+          it(keyName, () => {
+            // We generate a 128 bits key with crypto random
+            // getRandomValues takes bytes # instead of bits #
+            let AESKey = window.crypto.getRandomValues(new Uint8Array(length / 8))
+            should.exist(AESKey, 'Aes key is empty')
+            keyTemplate.key = AESKey
           })
-        })
-    })
-    context('AES-CTR', () => {
-      // Filter CTR
-      keys.filter(key => /aes-ctr/.test(key.name))
-        .forEach(key => {
-          messages.forEach(message => {
-            it(`${message.name} message \t${key.name}`, done => {
-              var alg = {
-                name: MasqCrypto.aesModes.CTR
-              }
-              // We create an AES object with some paramters
-              const myAES = new MasqCrypto.AES(
-                {
-                  mode: alg.name,
-                  key: key.key,
-                  keySize: key.keySize
-                }
-              )
-              myAES.encrypt(JSON.stringify(message.data))
-                .then(encryptedJSON => {
-                  should.exist(encryptedJSON, 'Encrypted message is empty')
-                  return myAES.decrypt(encryptedJSON)
-                })
-                .then(decryptedJSON => {
-                  chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
-                })
-                .then(done, done)
-            })
-          })
-        })
-    })
-    context('AES-GCM with additionnal data : "1.0.0"', () => {
-      // Filter GCM
-      keys.filter(key => /aes-gcm/.test(key.name))
-        .forEach(key => {
-          messages.forEach(message => {
-            it(`${message.name} message \t${key.name}`, done => {
-              var alg = {
-                name: MasqCrypto.aesModes.GCM
-              }
-              // We create an AES object with some paramters
-              const myAES = new MasqCrypto.AES(
-                {
-                  mode: alg.name,
-                  key: key.key,
-                  keySize: key.keySize,
-                  additionalData: '1.0.0'
-                }
-              )
-              myAES.encrypt(JSON.stringify(message.data))
-                .then(encryptedJSON => {
-                  should.exist(encryptedJSON, 'Encrypted message is empty')
-                  return myAES.decrypt(encryptedJSON)
-                })
-                .then(decryptedJSON => {
-                  chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
-                })
-                .then(done, done)
-            })
-          })
-        })
-    })
-    context('AES-GCM without additionnal data', () => {
-      // Filter GCM
-      keys.filter(key => /aes-gcm/.test(key.name))
-        .forEach(key => {
-          messages.forEach(message => {
-            it(`${message.name} message \t${key.name}`, done => {
-              var alg = {
-                name: MasqCrypto.aesModes.GCM
-              }
-              // We create an AES object with some paramters
-              const myAES = new MasqCrypto.AES(
-                {
-                  mode: alg.name,
-                  key: key.key,
-                  keySize: key.keySize
-                }
-              )
-              myAES.encrypt(JSON.stringify(message.data))
-                .then(encryptedJSON => {
-                  should.exist(encryptedJSON, 'Encrypted message is empty')
-                  return myAES.decrypt(encryptedJSON)
-                })
-                .then(decryptedJSON => {
-                  chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
-                })
-                .then(done, done)
-            })
-          })
-        })
-    })
-  })
-  context('Generate key with webCryptoAPI random generator aka raw keys', () => {
-    keys = []
-    // Keys
-    KEYS.forEach(key => {
-      // length (192 bits is not supported)
-      [128, 256].forEach(length => {
-        let keyName = `${key.alg} l:${length}`
-        var keyTemplate = {
-          name: keyName,
-          key: null,
-          keySize: length
-        }
-        keys.push(keyTemplate)
-        it(keyName, () => {
-          // We generate a 128 bits key with crypto random
-          // getRandomValues takes bytes # instead of bits #
-          let AESKey = window.crypto.getRandomValues(new Uint8Array(length / 8))
-          should.exist(AESKey, 'Aes key is empty')
-          keyTemplate.key = AESKey
         })
       })
     })
-  })
 
-  context('Encrypt/Decrypt with raw keys as input', () => {
-    context('AES-CBC', () => {
-      // Filter CBC
-      keys.filter(key => /aes-cbc/.test(key.name))
-        .forEach(key => {
-          messages.forEach(message => {
-            it(`${message.name} message \t${key.name}`, done => {
-              var alg = {
-                name: MasqCrypto.aesModes.CBC
-              }
-              // We create an AES object with some paramters
-              const myAES = new MasqCrypto.AES(
-                {
-                  mode: alg.name,
-                  key: key.key,
-                  keySize: key.keySize
-                }
-              )
-              myAES.encrypt(JSON.stringify(message.data))
-                .then(encryptedJSON => {
-                  should.exist(encryptedJSON, 'Encrypted message is empty')
-                  return myAES.decrypt(encryptedJSON)
-                })
-                .then(decryptedJSON => {
-                  chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
-                })
-                .then(done, done)
+    context('Encrypt/Decrypt with raw keys as input', () => {
+      const algos = ['cbc', 'ctr', 'gcm']
+
+      algos.forEach(algo =>
+        context(`aes-${algo}`, () => {
+          const filteredKeys = keys.filter(key => RegExp(`aes-${algo}`).test(key.name))
+          const alg = { name: MasqCrypto.aesModes[algo.toUpperCase()] }
+          filteredKeys.forEach(key => {
+            messages.forEach(message => {
+              testAlgo(message, key, alg)
             })
           })
         })
-    })
-    context('AES-CTR', () => {
-      // Filter CTR
-      keys.filter(key => /aes-ctr/.test(key.name))
-        .forEach(key => {
+      )
+
+      context('AES-GCM with additionnal data : "1.0.0"', () => {
+        // Filter GCM
+        const gcmKeys = keys.filter(key => /aes-gcm/.test(key.name))
+        const alg = { name: MasqCrypto.aesModes.GCM }
+        gcmKeys.forEach(key => {
           messages.forEach(message => {
-            it(`${message.name} message \t${key.name}`, done => {
-              var alg = {
-                name: MasqCrypto.aesModes.CTR
-              }
-              // We create an AES object with some paramters
-              const myAES = new MasqCrypto.AES(
-                {
-                  mode: alg.name,
-                  key: key.key,
-                  keySize: key.keySize
-                }
-              )
-              myAES.encrypt(JSON.stringify(message.data))
-                .then(encryptedJSON => {
-                  should.exist(encryptedJSON, 'Encrypted message is empty')
-                  return myAES.decrypt(encryptedJSON)
-                })
-                .then(decryptedJSON => {
-                  chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
-                })
-                .then(done, done)
-            })
+            testAlgo(message, key, alg, '1.0.0')
           })
         })
+      })
     })
-    context('AES-GCM with additionnal data : "1.0.0"', () => {
-      // Filter GCM
-      keys.filter(key => /aes-gcm/.test(key.name))
-        .forEach(key => {
-          messages.forEach(message => {
-            it(`${message.name} message \t${key.name}`, done => {
-              var alg = {
-                name: MasqCrypto.aesModes.GCM
-              }
-              // We create an AES object with some paramters
-              const myAES = new MasqCrypto.AES(
-                {
-                  mode: alg.name,
-                  key: key.key,
-                  keySize: key.keySize,
-                  additionalData: '1.0.0'
-                }
-              )
-              // optional : we can add additionalData later
-              // myAES.additionalData = "1.0.0"
-              myAES.encrypt(JSON.stringify(message.data))
-                .then(encryptedJSON => {
-                  should.exist(encryptedJSON, 'Encrypted message is empty')
-                  return myAES.decrypt(encryptedJSON)
-                })
-                .then(decryptedJSON => {
-                  chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
-                })
-                .then(done, done)
-            })
-          })
-        })
-    })
-    context('AES-GCM without additionnal data', () => {
-      // Filter GCM
-      keys.filter(key => /aes-gcm/.test(key.name))
-        .forEach(key => {
-          messages.forEach(message => {
-            it(`${message.name} message \t${key.name}`, done => {
-              var alg = {
-                name: MasqCrypto.aesModes.GCM
-              }
-              // We create an AES object with some paramters
-              const myAES = new MasqCrypto.AES(
-                {
-                  mode: alg.name,
-                  key: key.key,
-                  keySize: key.keySize
-                }
-              )
-              myAES.encrypt(JSON.stringify(message.data))
-                .then(encryptedJSON => {
-                  should.exist(encryptedJSON, 'Encrypted message is empty')
-                  return myAES.decrypt(encryptedJSON)
-                })
-                .then(decryptedJSON => {
-                  chai.assert(decryptedJSON, message.data, 'Decrypted message is wrong')
-                })
-                .then(done, done)
-            })
-          })
-        })
-    })
-  })
-  context('Wrap/Unwrap a key', () => {
-    context('AES-GCM', () => {
-      // Filter GCM
-      keys.filter(key => /aes-gcm/.test(key.name))
-        .forEach(key => {
+
+    context('Wrap/Unwrap a key', () => {
+      context('AES-GCM', () => {
+        // Filter GCM
+        const gcmKeys = keys.filter(key => /aes-gcm/.test(key.name))
+        gcmKeys.forEach(key => {
           it(`\t${key.name}`, done => {
-            var alg = {
-              name: MasqCrypto.aesModes.GCM
-            }
+            const alg = { name: MasqCrypto.aesModes.GCM }
             // We create an AES object with some paramters
-            const myAES = new MasqCrypto.AES(
-              {
-                mode: alg.name,
-                key: key.key,
-                keySize: key.keySize
-              }
-            )
+            const myAES = new MasqCrypto.AES({
+              mode: alg.name,
+              key: key.key,
+              keySize: key.keySize
+            })
             myAES.genAESKey().then(aesKey => {
               myAES.exportKeyRaw(aesKey).then(raw => {
                 myAES.wrapKey(aesKey, 'raw').then(res => {
@@ -363,6 +184,7 @@ describe('MasqCrypto AES', () => {
               .then(done, done)
           })
         })
+      })
     })
   })
 })
