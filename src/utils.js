@@ -83,7 +83,7 @@ const hexStringToBuffer = (hexString) => {
  */
 const deriveKey = (passPhrase, salt, iterations = 10000) => {
   // Always specify a strong salt
-  if (iterations < 10000) { console.log('The iteration number is less than 10000, increase it !') }
+  if (iterations < 10000) { throw new Error('The iteration number is less than 10000, increase it !') }
 
   return crypto.subtle.importKey(
     'raw',
