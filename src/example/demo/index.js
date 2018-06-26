@@ -210,17 +210,21 @@ const wrap = () => {
 }
 
 const unwrap = () => {
-  console.log('2.0')
-  const salt = Uint8Array.from([126, 252, 235, 252, 60, 233, 252, 81, 130, 147, 61, 241, 179, 85, 95, 23])
+  const salt = Uint8Array.from([124, 252, 235, 252, 60, 233, 252, 81, 130, 147, 61, 241, 179, 85, 95, 23])
   MasqCrypto.utils.deriveKey('hello', salt)
     .then(key => {
       const cipherAES = new MasqCrypto.AES({key: key})
       cipherAES.unwrapKey(resOfWrapKey.encryptedMasterKey, resOfWrapKey.iv, 'raw')
         .then(unwrapped => {
           console.log(unwrapped)
-        }).catch(err => console.log(err))
+        }).catch(err => 
+          {
+            console.log(err)
+          })
     })
-    .catch(err => console.log(err))
+    .catch(err => {
+      console.log(err)
+    })
 }
 
 const ecdh = () => {

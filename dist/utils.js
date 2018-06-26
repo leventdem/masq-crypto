@@ -102,8 +102,6 @@ var deriveKey = function deriveKey(passPhrase, salt) {
     }, baseKey, 128);
   }).then(function (derivedKey) {
     return new Uint8Array(derivedKey);
-  }).catch(function (err) {
-    return console.log(err);
   });
 };
 
@@ -121,8 +119,6 @@ var hash = function hash(msg) {
     name: 'SHA-256'
   }, typeof passPhrase === 'string' ? toArray(msg) : msg).then(function (digest) {
     return new Uint8Array(digest);
-  }).catch(function (err) {
-    return console.log(err);
   });
 };
 
@@ -140,7 +136,7 @@ var randomString = function randomString() {
       result += charset[values[i] % charset.length];
     }
   } else {
-    console.log("Your browser can't generate secure random numbers");
+    throw new Error("Your browser can't generate secure random numbers");
   }
   return result;
 };

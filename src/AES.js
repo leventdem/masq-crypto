@@ -1,15 +1,6 @@
 /* global crypto */
 import * as utils from './utils.js'
 
-/**
- * Print error messages
- *
- * @param {Error} err Error message
- */
-const logFail = (err) => {
-  console.log(err)
-}
-
 const aesModes = {
   CBC: 'aes-cbc',
   GCM: 'aes-gcm',
@@ -40,7 +31,6 @@ const decryptBuffer = (data, key, cipherContext) => {
   // TODO: test input params
   return crypto.subtle.decrypt(cipherContext, key, data)
     .then(result => new Uint8Array(result))
-    .catch(logFail)
 }
 
 /**
@@ -58,7 +48,6 @@ const decryptBuffer = (data, key, cipherContext) => {
 const encryptBuffer = (data, key, cipherContext) => {
   return crypto.subtle.encrypt(cipherContext, key, data)
     .then(result => new Uint8Array(result))
-    .catch(logFail)
 }
 /**
  * AES cipher
@@ -88,8 +77,7 @@ class AES {
     if (typeof newAdditionalData === 'string') {
       this._additionalData = newAdditionalData
     } else {
-      console.log("You did not provide a string for additional data, default value is ''.")
-      this._additionalData = ''
+      throw new Error("You did not provide a string for additional data, default value is ''.")
     }
   }
 
@@ -109,10 +97,7 @@ class AES {
     if (acceptedMode.includes(newMode)) {
       this._mode = newMode
     } else {
-      console.log(newMode + ' is not accepted.')
-      console.log(`Accepted modes are ${acceptedMode.join(', ')}`)
-      console.log(`Default mode is 'aes-gcm'.`)
-      this._mode = 'aes-gcm'
+      throw new Error(`Accepted modes are ${acceptedMode.join(', ')}`)
     }
   }
 
@@ -124,10 +109,7 @@ class AES {
     if (acceptedKeySize.includes(newKeySize)) {
       this._keySize = newKeySize
     } else {
-      console.log(newKeySize + ' is not accepted.')
-      console.log(`Accepted keySize are ${acceptedKeySize.join(', ')}`)
-      console.log(`Default keySize is '128'.`)
-      this._keySize = 128
+      throw new Error(`Accepted keySize are ${acceptedKeySize.join(', ')}`)
     }
   }
 
@@ -143,7 +125,6 @@ class AES {
       if (key instanceof Uint8Array) {
         obj.importKeyRaw(key)
           .then(resolve)
-          .catch(err => console.log(err))
       } else {
         resolve(key)
       }
@@ -159,7 +140,6 @@ class AES {
   exportKeyRaw (key, type = 'raw') {
     return crypto.subtle.exportKey(type, key)
       .then(key => new Uint8Array(key))
-      .catch(err => console.log(err))
   }
 
   /**
@@ -203,7 +183,6 @@ class AES {
           return decryptBuffer(context.ciphertext, key, cipherContext)
         })
         .then(res => utils.toString(res))
-        .catch(logFail)
     } else if (this.mode === 'aes-cbc') {
       // IV is 128 bits long === 16 bytes
       context.iv = input.hasOwnProperty('iv') ? utils.hexStringToBuffer(input.iv) : ''
@@ -215,7 +194,6 @@ class AES {
           return decryptBuffer(context.ciphertext, key, cipherContext)
         })
         .then(res => utils.toString(res))
-        .catch(logFail)
     } else if (this.mode === 'aes-ctr') {
       // IV is 128 bits long === 16 bytes
       context.iv = input.hasOwnProperty('iv') ? utils.hexStringToBuffer(input.iv) : ''
@@ -228,9 +206,8 @@ class AES {
           return decryptBuffer(context.ciphertext, key, cipherContext)
         })
         .then(res => utils.toString(res))
-        .catch(logFail)
     } else {
-      console.log(`The mode ${this.mode} is not yet supported`)
+      throw new Error(`The mode ${this.mode} is not yet supported`)
     }
   }
 
@@ -267,7 +244,6 @@ class AES {
             version: utils.toString(context.additionalData)
           }
         })
-        .catch(logFail)
     } else if (this.mode === 'aes-cbc') {
       // IV is 128 bits long === 16 bytes
       context.iv = this.iv || window.crypto.getRandomValues(new Uint8Array(16))
@@ -284,7 +260,6 @@ class AES {
             iv: utils.bufferToHexString(context.iv)
           }
         })
-        .catch(logFail)
     } else if (this.mode === 'aes-ctr') {
       // IV is 128 bits long === 16 bytes
       context.iv = this.iv || window.crypto.getRandomValues(new Uint8Array(16))
@@ -302,9 +277,8 @@ class AES {
             iv: utils.bufferToHexString(context.iv)
           }
         })
-        .catch(logFail)
     } else {
-      console.log(`The mode ${this.mode} is not yet supported`)
+      throw new Error(`The mode ${this.mode} is not yet supported`)
     }
   }
 
@@ -351,7 +325,6 @@ class AES {
           keySize: keySize || 128
         }
       })
-      .catch(logFail)
   }
 
   /**
@@ -366,7 +339,7 @@ class AES {
   */
   unwrapKey (wrappedKey, iv, keySize, importType) {
     return this.checkRaw(this, this.key)
-      .then(instanceKey => {
+    .then(instanceKey => {
         return crypto.subtle.unwrapKey(importType || 'raw',
           wrappedKey,
           instanceKey,
@@ -382,7 +355,6 @@ class AES {
           true,
           ['encrypt', 'decrypt'])
       })
-      .catch(err => console.log(err))
   }
 }
 module.exports.AES = AES

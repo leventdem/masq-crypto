@@ -101,7 +101,6 @@ const deriveKey = (passPhrase, salt, iterations = 10000) => {
       }, baseKey, 128)
     })
     .then(derivedKey => new Uint8Array(derivedKey))
-    .catch(err => console.log(err))
 }
 
 /**
@@ -119,7 +118,6 @@ const hash = (msg, type = 'SHA-256') => {
     (typeof passPhrase === 'string') ? toArray(msg) : msg
   )
     .then(digest => new Uint8Array(digest))
-    .catch(err => console.log(err))
 }
 
 // Generate a random string using the Webwindow API instead of Math.random
@@ -134,7 +132,7 @@ const randomString = (length = 18) => {
       result += charset[values[i] % charset.length]
     }
   } else {
-    console.log("Your browser can't generate secure random numbers")
+    throw new Error("Your browser can't generate secure random numbers")
   }
   return result
 }

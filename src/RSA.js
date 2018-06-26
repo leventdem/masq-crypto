@@ -1,13 +1,5 @@
 /* global crypto */
 
-/**
- * Print error messages
- *
- * @param {Error} err Error message
- */
-const logFail = (err) => {
-  console.log(err)
-}
 
 /**
  * RSA
@@ -67,7 +59,6 @@ class RSA {
         this.privateKey = cryptoKey.privateKey
         return cryptoKey
       })
-      .catch(logFail)
   }
 
   /**
@@ -99,7 +90,6 @@ class RSA {
       saltLength: 16
     }, privateKey || this.privateKey, data)
       .then(signature => new Uint8Array(signature))
-      .catch(logFail)
   }
 
   /**

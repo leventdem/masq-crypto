@@ -1,14 +1,5 @@
 /* global crypto */
 
-/**
- * Print error messages
- *
- * @param {Error} err Error message
- */
-const logFail = (err) => {
-  console.log(err)
-  console.log(err.code)
-}
 
 const acceptedCurve = [
   'P-256',
@@ -45,9 +36,7 @@ class EC {
     if (acceptedCurve.includes(newCurve)) {
       this._curve = newCurve
     } else {
-      console.log(newCurve + ' is not accepted.')
-      console.log(`Accepted curves are ${acceptedCurve.join(', ')}`)
-      this._curve = newCurve
+      throw new Error(`Accepted curves are ${acceptedCurve.join(', ')}`)
     }
   }
   get name () {
@@ -58,9 +47,7 @@ class EC {
     if (acceptedAlgName.includes(newName)) {
       this._name = newName
     } else {
-      console.log(newName + ' is not accepted.')
-      console.log(`Accepted names are ${acceptedAlgName.join(', ')}`)
-      this._name = newName
+      throw new Error(`Accepted names are ${acceptedAlgName.join(', ')}`)
     }
   }
 
@@ -82,10 +69,10 @@ class EC {
       .catch(err => {
         switch (err.code) {
           case 9:
-            console.log('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted')
+          throw new Error('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted')
             break
           default:
-            console.log(err)
+          throw new Error(err)
             break
         }
       })
@@ -104,7 +91,6 @@ class EC {
       if (key instanceof Uint8Array) {
         obj.importKeyRaw(key)
           .then(resolve)
-          .catch(logFail)
       } else {
         resolve(key)
       }
@@ -136,7 +122,7 @@ class EC {
         return crypto.subtle.exportKey('raw', derivedKey)
       })
       .then(rawKey => new Uint8Array(rawKey))
-      .catch(logFail)
+
   }
 
   /**
@@ -149,7 +135,6 @@ class EC {
   exportKeyRaw (key) {
     return crypto.subtle.exportKey('raw', key || this.publicKey)
       .then(rawKey => new Uint8Array(rawKey))
-      .catch(logFail)
   }
 
   /**
@@ -181,7 +166,6 @@ class EC {
       hash: { name: hash || this.hash }
     }, privateKey || this.privateKey, data)
       .then(signature => new Uint8Array(signature))
-      .catch(logFail)
   }
 
   /**

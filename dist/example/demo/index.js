@@ -203,16 +203,19 @@ var wrap = function wrap() {
 
 var unwrap = function unwrap() {
   console.log('2.0');
-  var salt = Uint8Array.from([126, 252, 235, 252, 60, 233, 252, 81, 130, 147, 61, 241, 179, 85, 95, 23]);
+  var salt = Uint8Array.from([124, 252, 235, 252, 60, 233, 252, 81, 130, 147, 61, 241, 179, 85, 95, 23]);
   MasqCrypto.utils.deriveKey('hello', salt).then(function (key) {
     var cipherAES = new MasqCrypto.AES({ key: key });
+    console.log('2.1');
     cipherAES.unwrapKey(resOfWrapKey.encryptedMasterKey, resOfWrapKey.iv, 'raw').then(function (unwrapped) {
       console.log(unwrapped);
     }).catch(function (err) {
-      return console.log(err);
+      console.log("error un unwrap 1");
+      console.log(err);
     });
   }).catch(function (err) {
-    return console.log(err);
+    console.log("error un unwrap");
+    console.log(err);
   });
 };
 

@@ -7,15 +7,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 /* global crypto */
 
 /**
- * Print error messages
- *
- * @param {Error} err Error message
- */
-var logFail = function logFail(err) {
-  console.log(err);
-};
-
-/**
  * RSA
  * @constructor
  * @param {Object} params - The RSA cipher parameters
@@ -23,7 +14,6 @@ var logFail = function logFail(err) {
  * @param {string} params.name The algorithm name  ("RSA-PSS")
  * @param {string} params.modulusLength - The modulus length (4096 default)
  */
-
 var RSA = function () {
   function RSA(params) {
     _classCallCheck(this, RSA);
@@ -46,9 +36,10 @@ var RSA = function () {
      * @returns {Promise} - The RSA key pair : publicKey and privateKey
      */
     value: function genRSAKeyPair() {
+      var _this = this;
+
       var modulusLength = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 4096;
 
-      var self = this;
       return crypto.subtle.generateKey({
         name: 'RSA-PSS',
         modulusLength: modulusLength, // can be 1024, 2048, or 4096
@@ -57,10 +48,10 @@ var RSA = function () {
           name: 'SHA-256'
         }
       }, false, ['sign', 'verify']).then(function (cryptoKey) {
-        self.publicKey = cryptoKey.publicKey;
-        self.privateKey = cryptoKey.privateKey;
+        _this.publicKey = cryptoKey.publicKey;
+        _this.privateKey = cryptoKey.privateKey;
         return cryptoKey;
-      }).catch(logFail);
+      });
     }
 
     /**
@@ -98,7 +89,7 @@ var RSA = function () {
         saltLength: 16
       }, privateKey || this.privateKey, data).then(function (signature) {
         return new Uint8Array(signature);
-      }).catch(logFail);
+      });
     }
 
     /**

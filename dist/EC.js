@@ -6,16 +6,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 /* global crypto */
 
-/**
- * Print error messages
- *
- * @param {Error} err Error message
- */
-var logFail = function logFail(err) {
-  console.log(err);
-  console.log(err.code);
-};
-
 var acceptedCurve = ['P-256', 'P-384', 'P-521'];
 var acceptedAlgName = ['ECDH', 'ECDSA'];
 
@@ -49,21 +39,22 @@ var EC = function () {
      * @returns {CryptoKey} - The generated EC key Pair as CryptoKey
      */
     value: function genECKeyPair() {
-      var self = this;
+      var _this = this;
+
       return crypto.subtle.generateKey({
         name: this.name,
         namedCurve: this.curve
       }, false, this.name === 'ECDH' ? ['deriveKey', 'deriveBits'] : ['sign', 'verify']).then(function (cryptoKey) {
-        self.publicKey = cryptoKey.publicKey;
-        self.privateKey = cryptoKey.privateKey;
+        _this.publicKey = cryptoKey.publicKey;
+        _this.privateKey = cryptoKey.privateKey;
         return cryptoKey;
       }).catch(function (err) {
         switch (err.code) {
           case 9:
-            console.log('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted');
+            throw new Error('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted');
             break;
           default:
-            console.log(err);
+            throw new Error(err);
             break;
         }
       });
@@ -83,7 +74,7 @@ var EC = function () {
     value: function checkRaw(obj, key) {
       return new Promise(function (resolve, reject) {
         if (key instanceof Uint8Array) {
-          obj.importKeyRaw(key).then(resolve).catch(logFail);
+          obj.importKeyRaw(key).then(resolve);
         } else {
           resolve(key);
         }
@@ -106,16 +97,16 @@ var EC = function () {
     value: function deriveKeyECDH(publicKey) {
       var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'aes-gcm';
 
-      var _this = this;
+      var _this2 = this;
 
       var keySize = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 128;
       var privateKey = arguments[3];
 
       return this.checkRaw(this, publicKey).then(function (key) {
         return crypto.subtle.deriveKey({
-          name: _this.name,
+          name: _this2.name,
           public: key
-        }, privateKey || _this.privateKey, {
+        }, privateKey || _this2.privateKey, {
           name: type,
           length: keySize
         }, true, ['decrypt', 'encrypt']);
@@ -123,7 +114,7 @@ var EC = function () {
         return crypto.subtle.exportKey('raw', derivedKey);
       }).then(function (rawKey) {
         return new Uint8Array(rawKey);
-      }).catch(logFail);
+      });
     }
 
     /**
@@ -139,7 +130,7 @@ var EC = function () {
     value: function exportKeyRaw(key) {
       return crypto.subtle.exportKey('raw', key || this.publicKey).then(function (rawKey) {
         return new Uint8Array(rawKey);
-      }).catch(logFail);
+      });
     }
 
     /**
@@ -177,7 +168,7 @@ var EC = function () {
         hash: { name: hash || this.hash }
       }, privateKey || this.privateKey, data).then(function (signature) {
         return new Uint8Array(signature);
-      }).catch(logFail);
+      });
     }
 
     /**
@@ -207,9 +198,7 @@ var EC = function () {
       if (acceptedCurve.includes(newCurve)) {
         this._curve = newCurve;
       } else {
-        console.log(newCurve + ' is not accepted.');
-        console.log('Accepted curves are ' + acceptedCurve.join(', '));
-        this._curve = newCurve;
+        throw new Error('Accepted curves are ' + acceptedCurve.join(', '));
       }
     }
   }, {
@@ -221,9 +210,7 @@ var EC = function () {
       if (acceptedAlgName.includes(newName)) {
         this._name = newName;
       } else {
-        console.log(newName + ' is not accepted.');
-        console.log('Accepted names are ' + acceptedAlgName.join(', '));
-        this._name = newName;
+        throw new Error('Accepted names are ' + acceptedAlgName.join(', '));
       }
     }
   }]);
