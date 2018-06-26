@@ -1,6 +1,5 @@
 /* global crypto */
 
-
 /**
  * RSA
  * @constructor

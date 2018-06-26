@@ -46,7 +46,7 @@
     ],
     "ignore": [
       "dist/",
-      "src/example"
+      "example"
     ]
   }
 }

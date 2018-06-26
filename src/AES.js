@@ -339,7 +339,7 @@ class AES {
   */
   unwrapKey (wrappedKey, iv, keySize, importType) {
     return this.checkRaw(this, this.key)
-    .then(instanceKey => {
+      .then(instanceKey => {
         return crypto.subtle.unwrapKey(importType || 'raw',
           wrappedKey,
           instanceKey,

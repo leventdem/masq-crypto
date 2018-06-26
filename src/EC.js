@@ -1,6 +1,5 @@
 /* global crypto */
 
-
 const acceptedCurve = [
   'P-256',
   'P-384',
@@ -67,13 +66,10 @@ class EC {
         return cryptoKey
       })
       .catch(err => {
-        switch (err.code) {
-          case 9:
+        if (err.code === 9) {
           throw new Error('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted')
-            break
-          default:
+        } else {
           throw new Error(err)
-            break
         }
       })
   }
@@ -122,7 +118,6 @@ class EC {
         return crypto.subtle.exportKey('raw', derivedKey)
       })
       .then(rawKey => new Uint8Array(rawKey))
-
   }
 
   /**
