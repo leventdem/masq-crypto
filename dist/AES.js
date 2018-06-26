@@ -65,6 +65,7 @@ var encryptBuffer = function encryptBuffer(data, key, cipherContext) {
  * @param {ArrayBuffer} [params.key] - The AES CryptoKey
  * @param {number} [params.keySize] - The key size in bits (128, 192, 256)
  * @param {number} [params.iv] - The IV, if not provided it will be generated randomly
+ * @param {number} [params.length] - The counter length for aes-ctr mode
  * @param {string} [params.additionalData] - The authenticated data, only for aes-gcm mode.
  */
 
