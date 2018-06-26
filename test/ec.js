@@ -1,13 +1,13 @@
-/* global MasqCrypto, chai */
-const should = chai.should()
+/* global MasqCrypto, chai, should */
 
 const ecKeys = []
-const KEYS = [
-  { alg: 'ECDH', usages: ['deriveKey', 'deriveBits'] }
-]
-const NAMED_CURVES = ['P-256', 'P-384', 'P-521']
 
 describe('MasqCrypto EC', function () {
+  const KEYS = [
+    { alg: 'ECDH', usages: ['deriveKey', 'deriveBits'] }
+  ]
+  const NAMED_CURVES = ['P-256', 'P-384', 'P-521']
+
   context('Key generations', () => {
     // Keys
     KEYS.forEach(key => {

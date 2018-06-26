@@ -1,5 +1,4 @@
-/* global chai, MasqCrypto */
-const should = chai.should()
+/* global chai, MasqCrypto, should */
 
 describe('MasqCrypto utils', function () {
   context('Data conversion functions', () => {
