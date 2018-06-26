@@ -49,13 +49,10 @@ var EC = function () {
         _this.privateKey = cryptoKey.privateKey;
         return cryptoKey;
       }).catch(function (err) {
-        switch (err.code) {
-          case 9:
-            throw new Error('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted');
-            break;
-          default:
-            throw new Error(err);
-            break;
+        if (err.code === 9) {
+          throw new Error('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted');
+        } else {
+          throw new Error(err);
         }
       });
     }
