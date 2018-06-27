@@ -66,6 +66,7 @@ var encryptBuffer = function encryptBuffer(data, key, cipherContext) {
  * @param {ArrayBuffer} [params.key] - The AES CryptoKey
  * @param {number} [params.keySize] - The key size in bits (128, 192, 256)
  * @param {number} [params.iv] - The IV, if not provided it will be generated randomly
+ * @param {number} [params.length] - The counter length for aes-ctr mode
  * @param {string} [params.additionalData] - The authenticated data, only for aes-gcm mode.
  */
 
@@ -442,13 +443,10 @@ var EC = function () {
         _this.privateKey = cryptoKey.privateKey;
         return cryptoKey;
       }).catch(function (err) {
-        switch (err.code) {
-          case 9:
-            throw new Error('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted');
-            break;
-          default:
-            throw new Error(err);
-            break;
+        if (err.code === 9) {
+          throw new Error('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted');
+        } else {
+          throw new Error(err);
         }
       });
     }
@@ -637,7 +635,7 @@ var RSA = function () {
     this.hash = params.hash || 'SHA-256';
     this.name = params.name || 'RSA-PSS';
     this.publicKey = null;
-    this.private = null;
+    this.privateKey = null;
   }
 
   _createClass(RSA, [{
@@ -893,7 +891,7 @@ var deriveKey = function deriveKey(passPhrase, salt) {
 
   // Always specify a strong salt
   if (iterations < 10000) {
-    console.log('The iteration number is less than 10000, increase it !');
+    console.warn('The iteration number is less than 10000, increase it !');
   }
 
   return crypto.subtle.importKey('raw', typeof passPhrase === 'string' ? toArray(passPhrase) : passPhrase, 'PBKDF2', false, ['deriveBits', 'deriveKey']).then(function (baseKey) {

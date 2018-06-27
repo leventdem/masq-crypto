@@ -22,7 +22,7 @@ var RSA = function () {
     this.hash = params.hash || 'SHA-256';
     this.name = params.name || 'RSA-PSS';
     this.publicKey = null;
-    this.private = null;
+    this.privateKey = null;
   }
 
   _createClass(RSA, [{

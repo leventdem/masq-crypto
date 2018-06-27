@@ -90,7 +90,7 @@ var deriveKey = function deriveKey(passPhrase, salt) {
 
   // Always specify a strong salt
   if (iterations < 10000) {
-    console.log('The iteration number is less than 10000, increase it !');
+    console.warn('The iteration number is less than 10000, increase it !');
   }
 
   return crypto.subtle.importKey('raw', typeof passPhrase === 'string' ? toArray(passPhrase) : passPhrase, 'PBKDF2', false, ['deriveBits', 'deriveKey']).then(function (baseKey) {
