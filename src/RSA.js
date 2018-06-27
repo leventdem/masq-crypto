@@ -21,21 +21,8 @@ class RSA {
     return this._publicKey
   }
 
-  /**
-   * Set RSA-PSS keys
-   *
-   * @param {Cryptokey} keys - The public RSA key
-   */
-  set publicKey (newPublicKey) {
-    this._publicKey = newPublicKey
-  }
-
   get privateKey () {
     return this._privateKey
-  }
-
-  set privateKey (newPrivateKey) {
-    this._privateKey = newPrivateKey
   }
 
   /**
@@ -54,8 +41,8 @@ class RSA {
       }
     }, false, ['sign', 'verify'])
       .then(cryptoKey => {
-        this.publicKey = cryptoKey.publicKey
-        this.privateKey = cryptoKey.privateKey
+        this._publicKey = cryptoKey.publicKey
+        this._privateKey = cryptoKey.privateKey
         return cryptoKey
       })
   }

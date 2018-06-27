@@ -48,8 +48,8 @@ var RSA = function () {
           name: 'SHA-256'
         }
       }, false, ['sign', 'verify']).then(function (cryptoKey) {
-        _this.publicKey = cryptoKey.publicKey;
-        _this.privateKey = cryptoKey.privateKey;
+        _this._publicKey = cryptoKey.publicKey;
+        _this._privateKey = cryptoKey.privateKey;
         return cryptoKey;
       });
     }
@@ -135,23 +135,10 @@ var RSA = function () {
     get: function get() {
       return this._publicKey;
     }
-
-    /**
-     * Set RSA-PSS keys
-     *
-     * @param {Cryptokey} keys - The public RSA key
-     */
-    ,
-    set: function set(newPublicKey) {
-      this._publicKey = newPublicKey;
-    }
   }, {
     key: 'privateKey',
     get: function get() {
       return this._privateKey;
-    },
-    set: function set(newPrivateKey) {
-      this._privateKey = newPrivateKey;
     }
   }]);
 
