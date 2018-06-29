@@ -138,7 +138,7 @@ class AES {
   * @param {CryptoKey} key - The CryptoKey
   * @returns {arrayBuffer} - The raw key
   */
-  exportKeyRaw (key, type = 'raw') {
+  exportKeyRaw (key = this._key, type = 'raw') {
     return crypto.subtle.exportKey(type, key)
       .then(key => new Uint8Array(key))
   }
