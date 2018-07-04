@@ -1,0 +1,44 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	0	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+document.addEventListener.POI_1	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/index.js	/^const apiData = {$/;"	property	line:47
+document.addEventListener.POI_2	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/index.js	/^  POI_1: 'Tour eiffel',$/;"	property	line:48
+document.addEventListener.POI_3	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/index.js	/^  POI_2: 'Bastille',$/;"	property	line:49
+html	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^<html lang="en">$/;"	function	line:2
+head	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^<head>$/;"	function	line:3
+title	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^<title>Crypto lib for Masq ---<\/title>$/;"	function	line:4
+style	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^<style>$/;"	function	line:5
+body	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^<body >$/;"	function	line:24
+h	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^  <h1>Aes test<\/h1>$/;"	function	line:25
+table	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^  <table>$/;"	function	line:26
+tr	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^    <tr>$/;"	function	line:27
+th	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^        <th>AES-GCM :<\/th>$/;"	function	line:28
+th	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^        <th> <button type="button" id="aesGCM">Run AES-GCM demo<\/button><\/th>$/;"	function	line:29
+tr	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^    <tr>$/;"	function	line:31
+th	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^        <th>AES-CBC :<\/th>$/;"	function	line:32
+th	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^        <th> <button type="button" id="aesCBC">Run AES-CBC demo<\/button><\/th>$/;"	function	line:33
+tr	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^    <tr>$/;"	function	line:35
+th	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^        <th>AES-CTR :<\/th>$/;"	function	line:36
+th	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^        <th> <button type="button" id="aesCTR">Run AES-CTR demo<\/button><\/th>$/;"	function	line:37
+h	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^    <h1>PBKDF2 :<\/h1>$/;"	function	line:40
+table	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^    <table>$/;"	function	line:41
+tr	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^      <tr>$/;"	function	line:42
+th	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^          <th>Generate a passphrase (18 chars default) and derive :<\/th>$/;"	function	line:43
+th	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^          <th> <button type="button" id="generatePassPhrase">Go<\/button><\/th>$/;"	function	line:44
+tr	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^      <tr>$/;"	function	line:46
+th	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^          <th>Derive passphrase :<\/th>$/;"	function	line:47
+th	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^          <th> <button type="button" id="derive">Go<\/button><\/th>$/;"	function	line:48
+h	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^      <h1>ECDH :<\/h1>$/;"	function	line:51
+table	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^      <table>$/;"	function	line:52
+tr	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^        <tr>$/;"	function	line:53
+th	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^            <th>ECDH without EC public keys verification (with RSA-PSS or ECDSA) :<\/th>$/;"	function	line:54
+th	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^            <th> <button type="button" id="ecdh">Go<\/button><\/th>$/;"	function	line:55
+p	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^        <p>A full demo of ECDH with EC public key verification is available in <a href="..\/pfs\/pfs.html">PFS demo<\/a> (Perfect Forward Secrecy)<\/p>$/;"	function	line:58
+p	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^        <p>A performance comparison between ECDSA and RSA-PSS is performed in this <a href="..\/perf\/perf.html">page<\/a>.  <\/p>$/;"	function	line:59
+br	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^<br\/>$/;"	function	line:60
+p	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^    <p>Results : open the console (CTRL + shift + i)<\/p>$/;"	function	line:61
+script	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^    <script type="text\/javascript" src="..\/..\/..\/dist\/MasqCrypto.js"><\/script>$/;"	function	line:63
+script	/home/ldemir/Documents/dev/masq/masq-crypto/src/example/demo/demo.html	/^    <script type="text\/javascript" src="..\/..\/..\/dist\/example\/demo\/index.js"><\/script>$/;"	function	line:64

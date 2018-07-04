@@ -1,7 +1,8 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.MasqCrypto = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /* global crypto */
+
 
 var _utils = require('./utils.js');
 
@@ -10,17 +11,6 @@ var utils = _interopRequireWildcard(_utils);
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-// @ts-check
-
-/**
- * Print error messages
- *
- * @param {Error} err Error message
- */
-var logFail = function logFail(err) {
-  console.log(err);
-};
 
 var aesModes = {
   CBC: 'aes-cbc',
@@ -33,7 +23,7 @@ var acceptedMode = ['aes-cbc', 'aes-gcm', 'aes-ctr'];
 var acceptedKeySize = [128, 192, 256];
 
 /**
- * Decrypt data with AES-GCM cipher
+ * Decrypt data
  *
  * @param {ArrayBuffer} data - Data to decrypt
  * @param {ArrayBuffer} key - The AES key as raw data. 128 or 256 bits
@@ -48,11 +38,11 @@ var decryptBuffer = function decryptBuffer(data, key, cipherContext) {
   // TODO: test input params
   return crypto.subtle.decrypt(cipherContext, key, data).then(function (result) {
     return new Uint8Array(result);
-  }).catch(logFail);
+  });
 };
 
 /**
- * Encrypt data with AES-GCM cipher
+ * Encrypt data
  *
  * @param {ArrayBuffer} data - Data to encrypt
  * @param {ArrayBuffer} key - The AES CryptoKey
@@ -66,7 +56,7 @@ var decryptBuffer = function decryptBuffer(data, key, cipherContext) {
 var encryptBuffer = function encryptBuffer(data, key, cipherContext) {
   return crypto.subtle.encrypt(cipherContext, key, data).then(function (result) {
     return new Uint8Array(result);
-  }).catch(logFail);
+  });
 };
 /**
  * AES cipher
@@ -76,6 +66,7 @@ var encryptBuffer = function encryptBuffer(data, key, cipherContext) {
  * @param {ArrayBuffer} [params.key] - The AES CryptoKey
  * @param {number} [params.keySize] - The key size in bits (128, 192, 256)
  * @param {number} [params.iv] - The IV, if not provided it will be generated randomly
+ * @param {number} [params.length] - The counter length for aes-ctr mode
  * @param {string} [params.additionalData] - The authenticated data, only for aes-gcm mode.
  */
 
@@ -105,12 +96,28 @@ var AES = function () {
     value: function checkRaw(obj, key) {
       return new Promise(function (resolve, reject) {
         if (key instanceof Uint8Array) {
-          obj.importKeyRaw(key).then(resolve).catch(function (err) {
-            return console.log(err);
-          });
+          obj.importKeyRaw(key).then(resolve);
         } else {
           resolve(key);
         }
+      });
+    }
+
+    /**
+    * Transform a CryptoKey into a raw key
+    *
+    * @param {CryptoKey} key - The CryptoKey
+    * @returns {arrayBuffer} - The raw key
+    */
+
+  }, {
+    key: 'exportKeyRaw',
+    value: function exportKeyRaw() {
+      var key = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._key;
+      var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'raw';
+
+      return crypto.subtle.exportKey(type, key).then(function (key) {
+        return new Uint8Array(key);
       });
     }
 
@@ -124,16 +131,15 @@ var AES = function () {
   }, {
     key: 'importKeyRaw',
     value: function importKeyRaw(key) {
-      return crypto.subtle.importKey('raw', key, {
-        name: this.mode
-      }, true, ['encrypt', 'decrypt']);
-    }
-  }, {
-    key: 'decrypt',
+      var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'raw';
 
+      return crypto.subtle.importKey(type, key, {
+        name: this.mode
+      }, true, ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey']);
+    }
 
     /**
-    * Decrypt the given input. All cipher context infomrmation
+    * Decrypt the given input. All cipher context information
     * have been initialized at object creation (default or parameter)
     *
     * @param {object} input - The ciphertext and associated decryption data
@@ -142,11 +148,13 @@ var AES = function () {
     * @param {hexString} [input.version] - The additionnal data for aes-gcm mode
     * @returns {string} - The decrypted input
     */
+
+  }, {
+    key: 'decrypt',
     value: function decrypt(input) {
       // Prepare context, all modes have at least one property : ciphertext
       var context = {};
       var cipherContext = {};
-      var self = this;
       context.ciphertext = input.hasOwnProperty('ciphertext') ? utils.hexStringToBuffer(input.ciphertext) : '';
       if (this.mode === 'aes-gcm') {
         context.iv = input.hasOwnProperty('iv') ? utils.hexStringToBuffer(input.iv) : '';
@@ -157,22 +165,22 @@ var AES = function () {
         cipherContext.iv = context.iv;
         cipherContext.additionalData = context.additionalData;
         // This function test the given key and return the Cryptokey
-        return this.checkRaw(self, this.key).then(function (key) {
+        return this.checkRaw(this, this.key).then(function (key) {
           return decryptBuffer(context.ciphertext, key, cipherContext);
         }).then(function (res) {
           return utils.toString(res);
-        }).catch(logFail);
+        });
       } else if (this.mode === 'aes-cbc') {
         // IV is 128 bits long === 16 bytes
         context.iv = input.hasOwnProperty('iv') ? utils.hexStringToBuffer(input.iv) : '';
         // Prepare cipher context, depends on cipher mode
         cipherContext.name = this.mode;
         cipherContext.iv = context.iv;
-        return this.checkRaw(self, this.key).then(function (key) {
+        return this.checkRaw(this, this.key).then(function (key) {
           return decryptBuffer(context.ciphertext, key, cipherContext);
         }).then(function (res) {
           return utils.toString(res);
-        }).catch(logFail);
+        });
       } else if (this.mode === 'aes-ctr') {
         // IV is 128 bits long === 16 bytes
         context.iv = input.hasOwnProperty('iv') ? utils.hexStringToBuffer(input.iv) : '';
@@ -180,20 +188,20 @@ var AES = function () {
         cipherContext.name = this.mode;
         cipherContext.counter = context.iv;
         cipherContext.length = this.length;
-        return this.checkRaw(self, this.key).then(function (key) {
+        return this.checkRaw(this, this.key).then(function (key) {
           return decryptBuffer(context.ciphertext, key, cipherContext);
         }).then(function (res) {
           return utils.toString(res);
-        }).catch(logFail);
+        });
       } else {
-        console.log('The mode ' + this.mode + ' is not yet supported');
+        throw new Error('The mode ' + this.mode + ' is not yet supported');
       }
     }
 
     /**
-    * Eecrypt the given input. All cipher context information
+    * Encrypt the given input. All cipher context information
     * have been initialized at object creation (as default or as parameter)
-    * If the input is an ohas to be stringified
+    * If the input is an object, it has to be stringified
     *
     * @param {string} input - The plaintext
     * @returns {object} - The encrypted input with additional cipher information (e.g. iv)
@@ -205,7 +213,6 @@ var AES = function () {
       // all modes have at least the plaintext
       var context = {};
       var cipherContext = {};
-      var self = this;
       context.plaintext = utils.toArray(input);
       if (this.mode === 'aes-gcm') {
         // IV is 96 bits long === 12 bytes
@@ -214,9 +221,9 @@ var AES = function () {
         // Prepare cipher context, depends on cipher mode
         cipherContext.name = this.mode;
         cipherContext.iv = context.iv;
-        // This function test the given key and return the Cryptokey
         cipherContext.additionalData = context.additionalData;
-        return this.checkRaw(self, this.key).then(function (key) {
+        // This function tests the given key and return the Cryptokey
+        return this.checkRaw(this, this.key).then(function (key) {
           return encryptBuffer(context.plaintext, key, cipherContext);
         }).then(function (result) {
           return {
@@ -224,21 +231,21 @@ var AES = function () {
             iv: utils.bufferToHexString(context.iv),
             version: utils.toString(context.additionalData)
           };
-        }).catch(logFail);
+        });
       } else if (this.mode === 'aes-cbc') {
         // IV is 128 bits long === 16 bytes
         context.iv = this.iv || window.crypto.getRandomValues(new Uint8Array(16));
         // Prepare cipher context, depends on cipher mode
         cipherContext.name = this.mode;
         cipherContext.iv = context.iv;
-        return this.checkRaw(self, this.key).then(function (key) {
+        return this.checkRaw(this, this.key).then(function (key) {
           return encryptBuffer(context.plaintext, key, cipherContext);
         }).then(function (result) {
           return {
             ciphertext: utils.bufferToHexString(result),
             iv: utils.bufferToHexString(context.iv)
           };
-        }).catch(logFail);
+        });
       } else if (this.mode === 'aes-ctr') {
         // IV is 128 bits long === 16 bytes
         context.iv = this.iv || window.crypto.getRandomValues(new Uint8Array(16));
@@ -246,22 +253,22 @@ var AES = function () {
         cipherContext.name = this.mode;
         cipherContext.counter = context.iv;
         cipherContext.length = this.length;
-        return this.checkRaw(self, this.key).then(function (key) {
+        return this.checkRaw(this, this.key).then(function (key) {
           return encryptBuffer(context.plaintext, key, cipherContext);
         }).then(function (result) {
           return {
             ciphertext: utils.bufferToHexString(result),
             iv: utils.bufferToHexString(context.iv)
           };
-        }).catch(logFail);
+        });
       } else {
-        console.log('The mode ' + this.mode + ' is not yet supported');
+        throw new Error('The mode ' + this.mode + ' is not yet supported');
       }
     }
 
     /**
      * Generate an AES key based on the cipher mode and keysize
-     * Cipher mode and keys are initialized at cipher AES instance creation.
+     * Cipher mode and key size are initialized at cipher AES instance creation.
      *
      * @returns {CryptoKey} - The generated AES key.
      */
@@ -274,6 +281,66 @@ var AES = function () {
         length: this.keySize || 128
       }, true, ['decrypt', 'encrypt']);
     }
+
+    /**
+    * Wrap the given key. All cipher context information of the wrapping key
+    * have been initialized at object creation (default or parameter)
+    * Return the wrappedKey and the associated iv.
+    *
+    * @param {CryptoKey} toBeWrappedKey - The key we want to wrap
+    * @param {string} [keySize] - The size of the key we want to wrap
+    * @param {string} [exportType] - The export format of the toBeWrappedKey
+    * @returns {Uint8Array} - The wrapped key
+    */
+
+  }, {
+    key: 'wrapKey',
+    value: function wrapKey(toBeWrappedKey, keySize, exportType) {
+      var _this = this;
+
+      var iv = window.crypto.getRandomValues(new Uint8Array(12));
+      return this.checkRaw(this, this.key).then(function (instanceKey) {
+        return crypto.subtle.wrapKey(exportType || 'raw', toBeWrappedKey, instanceKey, {
+          name: _this.mode || 'aes-gcm',
+          iv: iv,
+          additionalData: utils.toArray('')
+        });
+      }).then(function (wrappedKey) {
+        return {
+          encryptedMasterKey: new Uint8Array(wrappedKey),
+          iv: iv,
+          keySize: keySize || 128
+        };
+      });
+    }
+
+    /**
+    * Unwrap the given key. All cipher context information of the wrapping key
+    * have been initialized at object creation (default or parameter)
+    *
+    * @param {Uint8array} wrappedKey - The wrapped key
+    * @param {Uint8Array} iv - The iv
+    * @param {Uint8Array} keySize - The size of the unwrapped key (same as before wrapping)
+    * @param {string} [importType] - The import format of the wrappedKey, must be the same as in wrap.
+    * @returns {CryptoKey} - The decrypted input
+    */
+
+  }, {
+    key: 'unwrapKey',
+    value: function unwrapKey(wrappedKey, iv, keySize, importType) {
+      var _this2 = this;
+
+      return this.checkRaw(this, this.key).then(function (instanceKey) {
+        return crypto.subtle.unwrapKey(importType || 'raw', wrappedKey, instanceKey, {
+          name: _this2.mode || 'aes-gcm',
+          iv: iv,
+          additionalData: utils.toArray('')
+        }, {
+          name: _this2.mode || 'aes-gcm',
+          length: keySize || 128
+        }, true, ['encrypt', 'decrypt']);
+      });
+    }
   }, {
     key: 'additionalData',
     get: function get() {
@@ -283,8 +350,7 @@ var AES = function () {
       if (typeof newAdditionalData === 'string') {
         this._additionalData = newAdditionalData;
       } else {
-        console.log("You did not provide a string for additional data, default value is ''.");
-        this._additionalData = '';
+        throw new Error("You did not provide a string for additional data, default value is ''.");
       }
     }
   }, {
@@ -304,10 +370,7 @@ var AES = function () {
       if (acceptedMode.includes(newMode)) {
         this._mode = newMode;
       } else {
-        console.log(newMode + ' is not accepted.');
-        console.log('Accepted modes are ' + acceptedMode.join(', '));
-        console.log('Default mode is \'aes-gcm\'.');
-        this._mode = 'aes-gcm';
+        throw new Error('Accepted modes are ' + acceptedMode.join(', '));
       }
     }
   }, {
@@ -319,10 +382,7 @@ var AES = function () {
       if (acceptedKeySize.includes(newKeySize)) {
         this._keySize = newKeySize;
       } else {
-        console.log(newKeySize + ' is not accepted.');
-        console.log('Accepted keySize are ' + acceptedKeySize.join(', '));
-        console.log('Default keySize is \'128\'.');
-        this._keySize = 128;
+        throw new Error('Accepted keySize are ' + acceptedKeySize.join(', '));
       }
     }
   }]);
@@ -339,15 +399,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-/**
- * Print error messages
- *
- * @param {Error} err Error message
- */
-var logFail = function logFail(err) {
-  console.log(err);
-  console.log(err.code);
-};
+/* global crypto */
 
 var acceptedCurve = ['P-256', 'P-384', 'P-521'];
 var acceptedAlgName = ['ECDH', 'ECDSA'];
@@ -382,22 +434,20 @@ var EC = function () {
      * @returns {CryptoKey} - The generated EC key Pair as CryptoKey
      */
     value: function genECKeyPair() {
-      var self = this;
+      var _this = this;
+
       return crypto.subtle.generateKey({
         name: this.name,
         namedCurve: this.curve
       }, false, this.name === 'ECDH' ? ['deriveKey', 'deriveBits'] : ['sign', 'verify']).then(function (cryptoKey) {
-        self.publicKey = cryptoKey.publicKey;
-        self.privateKey = cryptoKey.privateKey;
+        _this.publicKey = cryptoKey.publicKey;
+        _this.privateKey = cryptoKey.privateKey;
         return cryptoKey;
       }).catch(function (err) {
-        switch (err.code) {
-          case 9:
-            console.log('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted');
-            break;
-          default:
-            console.log(err);
-            break;
+        if (err.code === 9) {
+          throw new Error('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted');
+        } else {
+          throw new Error(err);
         }
       });
     }
@@ -416,7 +466,7 @@ var EC = function () {
     value: function checkRaw(obj, key) {
       return new Promise(function (resolve, reject) {
         if (key instanceof Uint8Array) {
-          obj.importKeyRaw(key).then(resolve).catch(logFail);
+          obj.importKeyRaw(key).then(resolve);
         } else {
           resolve(key);
         }
@@ -439,16 +489,16 @@ var EC = function () {
     value: function deriveKeyECDH(publicKey) {
       var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'aes-gcm';
 
-      var _this = this;
+      var _this2 = this;
 
       var keySize = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 128;
       var privateKey = arguments[3];
 
       return this.checkRaw(this, publicKey).then(function (key) {
         return crypto.subtle.deriveKey({
-          name: _this.name,
+          name: _this2.name,
           public: key
-        }, privateKey || _this.privateKey, {
+        }, privateKey || _this2.privateKey, {
           name: type,
           length: keySize
         }, true, ['decrypt', 'encrypt']);
@@ -456,7 +506,7 @@ var EC = function () {
         return crypto.subtle.exportKey('raw', derivedKey);
       }).then(function (rawKey) {
         return new Uint8Array(rawKey);
-      }).catch(logFail);
+      });
     }
 
     /**
@@ -472,7 +522,7 @@ var EC = function () {
     value: function exportKeyRaw(key) {
       return crypto.subtle.exportKey('raw', key || this.publicKey).then(function (rawKey) {
         return new Uint8Array(rawKey);
-      }).catch(logFail);
+      });
     }
 
     /**
@@ -510,7 +560,7 @@ var EC = function () {
         hash: { name: hash || this.hash }
       }, privateKey || this.privateKey, data).then(function (signature) {
         return new Uint8Array(signature);
-      }).catch(logFail);
+      });
     }
 
     /**
@@ -540,9 +590,7 @@ var EC = function () {
       if (acceptedCurve.includes(newCurve)) {
         this._curve = newCurve;
       } else {
-        console.log(newCurve + ' is not accepted.');
-        console.log('Accepted curves are ' + acceptedCurve.join(', '));
-        this._curve = newCurve;
+        throw new Error('Accepted curves are ' + acceptedCurve.join(', '));
       }
     }
   }, {
@@ -554,9 +602,7 @@ var EC = function () {
       if (acceptedAlgName.includes(newName)) {
         this._name = newName;
       } else {
-        console.log(newName + ' is not accepted.');
-        console.log('Accepted names are ' + acceptedAlgName.join(', '));
-        this._name = newName;
+        throw new Error('Accepted names are ' + acceptedAlgName.join(', '));
       }
     }
   }]);
@@ -572,14 +618,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-/**
- * Print error messages
- *
- * @param {Error} err Error message
- */
-var logFail = function logFail(err) {
-  console.log(err);
-};
+/* global crypto */
 
 /**
  * RSA
@@ -589,7 +628,6 @@ var logFail = function logFail(err) {
  * @param {string} params.name The algorithm name  ("RSA-PSS")
  * @param {string} params.modulusLength - The modulus length (4096 default)
  */
-
 var RSA = function () {
   function RSA(params) {
     _classCallCheck(this, RSA);
@@ -598,7 +636,7 @@ var RSA = function () {
     this.hash = params.hash || 'SHA-256';
     this.name = params.name || 'RSA-PSS';
     this.publicKey = null;
-    this.private = null;
+    this.privateKey = null;
   }
 
   _createClass(RSA, [{
@@ -612,9 +650,10 @@ var RSA = function () {
      * @returns {Promise} - The RSA key pair : publicKey and privateKey
      */
     value: function genRSAKeyPair() {
+      var _this = this;
+
       var modulusLength = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 4096;
 
-      var self = this;
       return crypto.subtle.generateKey({
         name: 'RSA-PSS',
         modulusLength: modulusLength, // can be 1024, 2048, or 4096
@@ -623,10 +662,10 @@ var RSA = function () {
           name: 'SHA-256'
         }
       }, false, ['sign', 'verify']).then(function (cryptoKey) {
-        self.publicKey = cryptoKey.publicKey;
-        self.privateKey = cryptoKey.privateKey;
+        _this._publicKey = cryptoKey.publicKey;
+        _this._privateKey = cryptoKey.privateKey;
         return cryptoKey;
-      }).catch(logFail);
+      });
     }
 
     /**
@@ -664,7 +703,7 @@ var RSA = function () {
         saltLength: 16
       }, privateKey || this.privateKey, data).then(function (signature) {
         return new Uint8Array(signature);
-      }).catch(logFail);
+      });
     }
 
     /**
@@ -710,23 +749,10 @@ var RSA = function () {
     get: function get() {
       return this._publicKey;
     }
-
-    /**
-     * Set RSA-PSS keys
-     *
-     * @param {Cryptokey} keys - The public RSA key
-     */
-    ,
-    set: function set(newPublicKey) {
-      this._publicKey = newPublicKey;
-    }
   }, {
     key: 'privateKey',
     get: function get() {
       return this._privateKey;
-    },
-    set: function set(newPrivateKey) {
-      this._privateKey = newPrivateKey;
     }
   }]);
 
@@ -762,6 +788,8 @@ module.exports.RSA = _RSA2.default.RSA;
 module.exports.utils = _utils2.default;
 },{"./AES":1,"./EC":2,"./RSA":3,"./utils":5}],5:[function(require,module,exports){
 'use strict';
+
+/* global crypto */
 
 /**
  * Convert ascii to ArrayBufffer
@@ -849,9 +877,9 @@ var hexStringToBuffer = function hexStringToBuffer(hexString) {
 var deriveKey = function deriveKey(passPhrase, salt) {
   var iterations = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 10000;
 
-  // Always specify a strong salt 
+  // Always specify a strong salt
   if (iterations < 10000) {
-    console.log('The iteration number is less than 10000, increase it !');
+    console.warn('The iteration number is less than 10000, increase it !');
   }
 
   return crypto.subtle.importKey('raw', typeof passPhrase === 'string' ? toArray(passPhrase) : passPhrase, 'PBKDF2', false, ['deriveBits', 'deriveKey']).then(function (baseKey) {
@@ -863,8 +891,23 @@ var deriveKey = function deriveKey(passPhrase, salt) {
     }, baseKey, 128);
   }).then(function (derivedKey) {
     return new Uint8Array(derivedKey);
-  }).catch(function (err) {
-    return console.log(err);
+  });
+};
+
+/**
+ * Hash of a string or arrayBuffer
+ *
+ * @param {string | arrayBuffer} msg The message
+ * @param {string} [type] The hash name (SHA-256 by default)
+ * @returns {Promise}   A promise that contains the hash as a Uint8Array
+ */
+var hash = function hash(msg) {
+  var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'SHA-256';
+
+  return window.crypto.subtle.digest({
+    name: 'SHA-256'
+  }, typeof passPhrase === 'string' ? toArray(msg) : msg).then(function (digest) {
+    return new Uint8Array(digest);
   });
 };
 
@@ -882,9 +925,39 @@ var randomString = function randomString() {
       result += charset[values[i] % charset.length];
     }
   } else {
-    console.log("Your browser can't generate secure random numbers");
+    throw new Error("Your browser can't generate secure random numbers");
   }
   return result;
+};
+
+/**
+   * Generate an AES key based on the cipher mode and keysize
+   *
+   * @returns {CryptoKey} - The generated AES key.
+   */
+var genAESKey = function genAESKey() {
+  var mode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'aes-gcm';
+  var keySize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 128;
+
+  return crypto.subtle.generateKey({
+    name: mode,
+    length: keySize
+  }, true, ['decrypt', 'encrypt']);
+};
+/**
+   * Generate an AES key based on the cipher mode and keysize
+   *
+   * @returns {CryptoKey} - The generated AES key.
+   */
+var genAESKeyRaw = function genAESKeyRaw() {
+  var mode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'aes-gcm';
+  var keySize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 128;
+
+  return genAESKey(mode, keySize).then(function (key) {
+    return crypto.subtle.exportKey('raw', key).then(function (key) {
+      return new Uint8Array(key);
+    });
+  });
 };
 
 module.exports = {
@@ -893,7 +966,10 @@ module.exports = {
   toString: toString,
   hexStringToBuffer: hexStringToBuffer,
   deriveKey: deriveKey,
-  randomString: randomString
+  randomString: randomString,
+  hash: hash,
+  genAESKey: genAESKey,
+  genAESKeyRaw: genAESKeyRaw
 };
 },{}]},{},[4])(4)
 });

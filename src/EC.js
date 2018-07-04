@@ -1,13 +1,4 @@
-
-/**
- * Print error messages
- *
- * @param {Error} err Error message
- */
-const logFail = (err) => {
-  console.log(err)
-  console.log(err.code)
-}
+/* global crypto */
 
 const acceptedCurve = [
   'P-256',
@@ -44,9 +35,7 @@ class EC {
     if (acceptedCurve.includes(newCurve)) {
       this._curve = newCurve
     } else {
-      console.log(newCurve + ' is not accepted.')
-      console.log(`Accepted curves are ${acceptedCurve.join(', ')}`)
-      this._curve = newCurve
+      throw new Error(`Accepted curves are ${acceptedCurve.join(', ')}`)
     }
   }
   get name () {
@@ -57,9 +46,7 @@ class EC {
     if (acceptedAlgName.includes(newName)) {
       this._name = newName
     } else {
-      console.log(newName + ' is not accepted.')
-      console.log(`Accepted names are ${acceptedAlgName.join(', ')}`)
-      this._name = newName
+      throw new Error(`Accepted names are ${acceptedAlgName.join(', ')}`)
     }
   }
 
@@ -69,24 +56,20 @@ class EC {
    * @returns {CryptoKey} - The generated EC key Pair as CryptoKey
    */
   genECKeyPair () {
-    let self = this
     return crypto.subtle.generateKey({
       name: this.name,
       namedCurve: this.curve
     }, false, this.name === 'ECDH' ? ['deriveKey', 'deriveBits'] : ['sign', 'verify'])
       .then(cryptoKey => {
-        self.publicKey = cryptoKey.publicKey
-        self.privateKey = cryptoKey.privateKey
+        this.publicKey = cryptoKey.publicKey
+        this.privateKey = cryptoKey.privateKey
         return cryptoKey
       })
       .catch(err => {
-        switch (err.code) {
-          case 9:
-            console.log('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted')
-            break
-          default:
-            console.log(err)
-            break
+        if (err.code === 9) {
+          throw new Error('WebCrypto API error :\n - During ECDH key generation: given namedCurve parameter is not accepted')
+        } else {
+          throw new Error(err)
         }
       })
   }
@@ -104,7 +87,6 @@ class EC {
       if (key instanceof Uint8Array) {
         obj.importKeyRaw(key)
           .then(resolve)
-          .catch(logFail)
       } else {
         resolve(key)
       }
@@ -136,7 +118,6 @@ class EC {
         return crypto.subtle.exportKey('raw', derivedKey)
       })
       .then(rawKey => new Uint8Array(rawKey))
-      .catch(logFail)
   }
 
   /**
@@ -149,7 +130,6 @@ class EC {
   exportKeyRaw (key) {
     return crypto.subtle.exportKey('raw', key || this.publicKey)
       .then(rawKey => new Uint8Array(rawKey))
-      .catch(logFail)
   }
 
   /**
@@ -161,8 +141,8 @@ class EC {
    */
   importKeyRaw (key, curve, algName) {
     return crypto.subtle.importKey('raw', key, {
-      name: algName ||  this.name,
-      namedCurve: curve ||  this.curve
+      name: algName || this.name,
+      namedCurve: curve || this.curve
     }, true, [])
   }
 
@@ -181,7 +161,6 @@ class EC {
       hash: { name: hash || this.hash }
     }, privateKey || this.privateKey, data)
       .then(signature => new Uint8Array(signature))
-      .catch(logFail)
   }
 
   /**

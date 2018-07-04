@@ -1,22 +1,20 @@
+/* global MasqCrypto, chai, should */
+
 const ecKeys = []
 
 describe('MasqCrypto EC', function () {
-  var KEYS = [
+  const KEYS = [
     { alg: 'ECDH', usages: ['deriveKey', 'deriveBits'] }
   ]
-  var DIGEST = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512']
-  var NAMED_CURVES = ['P-256', 'P-384', 'P-521']
-
-  var ecKeys = []
+  const NAMED_CURVES = ['P-256', 'P-384', 'P-521']
 
   context('Key generations', () => {
-
     // Keys
     KEYS.forEach(key => {
       // namedCurve
       NAMED_CURVES.forEach(namedCurve => {
-        var keyName = `${key.alg} crv:${namedCurve}`
-        var keyTemplate = {
+        const keyName = `${key.alg} crv:${namedCurve}`
+        const keyTemplate = {
           name: keyName,
           privateKey: null,
           publicKey: null,
@@ -47,9 +45,8 @@ describe('MasqCrypto EC', function () {
       })
     })
 
-    context("Derive key", () => {
-
-      ecKeys.filter(key => key.usages.some(usage => usage === "deriveKey"))
+    context('Derive key', () => {
+      ecKeys.filter(key => key.usages.some(usage => usage === 'deriveKey'))
         .forEach(key => {
           // AES alg
           [MasqCrypto.aesModes.CBC, MasqCrypto.aesModes.GCM].forEach(aesAlg => {
@@ -89,7 +86,6 @@ describe('MasqCrypto EC', function () {
                 aliceEC.deriveKeyECDH(BobECPubKey, MasqCrypto.aesModes.GCM, 128).then(AESKeyAlice => {
                   bobEC.importKeyRaw(aliceawKey).then(AliceECPubKey => {
                     bobEC.deriveKeyECDH(AliceECPubKey, 'aes-gcm', 128).then(AESKeyBob => {
-                      //console.log(AESKeyAlice, AESKeyBob)
                       chai.assert.deepEqual(AESKeyAlice, AESKeyBob, 'Both derived symmetric key do not match')
                     }).then(done, done)
                   })
@@ -100,5 +96,5 @@ describe('MasqCrypto EC', function () {
         })
       })
     })
-  })  
+  })
 })

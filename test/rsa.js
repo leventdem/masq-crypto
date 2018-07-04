@@ -1,3 +1,5 @@
+/* global chai, MasqCrypto, should */
+
 describe('MasqCrypto RSA', function () {
   var TEST_MESSAGE = MasqCrypto.utils.toArray('1234567890123456')
   var KEYS = [

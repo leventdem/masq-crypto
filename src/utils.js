@@ -1,3 +1,5 @@
+/* global crypto */
+
 /**
  * Convert ascii to ArrayBufffer
  * ex : "bonjour" -> Uint8Array [ 98, 111, 110, 106, 111, 117, 114 ]
@@ -80,8 +82,8 @@ const hexStringToBuffer = (hexString) => {
  * @returns {Promise}   A promise that contains the derived key
  */
 const deriveKey = (passPhrase, salt, iterations = 10000) => {
-  // Always specify a strong salt 
-  if (iterations < 10000) { console.log('The iteration number is less than 10000, increase it !') }
+  // Always specify a strong salt
+  if (iterations < 10000) { console.warn('The iteration number is less than 10000, increase it !') }
 
   return crypto.subtle.importKey(
     'raw',
@@ -99,7 +101,23 @@ const deriveKey = (passPhrase, salt, iterations = 10000) => {
       }, baseKey, 128)
     })
     .then(derivedKey => new Uint8Array(derivedKey))
-    .catch(err => console.log(err))
+}
+
+/**
+ * Hash of a string or arrayBuffer
+ *
+ * @param {string | arrayBuffer} msg The message
+ * @param {string} [type] The hash name (SHA-256 by default)
+ * @returns {Promise}   A promise that contains the hash as a Uint8Array
+ */
+const hash = (msg, type = 'SHA-256') => {
+  return window.crypto.subtle.digest(
+    {
+      name: 'SHA-256'
+    },
+    (typeof passPhrase === 'string') ? toArray(msg) : msg
+  )
+    .then(digest => new Uint8Array(digest))
 }
 
 // Generate a random string using the Webwindow API instead of Math.random
@@ -114,9 +132,32 @@ const randomString = (length = 18) => {
       result += charset[values[i] % charset.length]
     }
   } else {
-    console.log("Your browser can't generate secure random numbers")
+    throw new Error("Your browser can't generate secure random numbers")
   }
   return result
+}
+
+/**
+   * Generate an AES key based on the cipher mode and keysize
+   *
+   * @returns {CryptoKey} - The generated AES key.
+   */
+const genAESKey = (mode = 'aes-gcm', keySize = 128) => {
+  return crypto.subtle.generateKey({
+    name: mode,
+    length: keySize
+  }, true, ['decrypt', 'encrypt'])
+}
+/**
+   * Generate an AES key based on the cipher mode and keysize
+   *
+   * @returns {CryptoKey} - The generated AES key.
+   */
+const genAESKeyRaw = (mode = 'aes-gcm', keySize = 128) => {
+  return genAESKey(mode, keySize).then(key => {
+    return crypto.subtle.exportKey('raw', key)
+      .then(key => new Uint8Array(key))
+  })
 }
 
 module.exports = {
@@ -125,5 +166,8 @@ module.exports = {
   toString: toString,
   hexStringToBuffer: hexStringToBuffer,
   deriveKey: deriveKey,
-  randomString: randomString
+  randomString: randomString,
+  hash: hash,
+  genAESKey: genAESKey,
+  genAESKeyRaw: genAESKeyRaw
 }
