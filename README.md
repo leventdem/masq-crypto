@@ -173,7 +173,7 @@ In this example, we illustrate a communication between two users : Alice and Bob
 Here are the steps :
 1) Generation of long-term RSA-PSS key pairs (the exchange of the corresponding public keys is out of the scope).
 2) Before sending data, we first generate a ephemeral EC key pairs for each user.
-3) Each EC public key is signed with the other user's RSA private key and sent over an (unsecured) channel.
+3) Each EC public key is signed with the user's RSA private key and sent over a (potentially unsecured) channel.
 4) Each user verifies the received EC public key.
 5) If both verifications are succesful, Alice and Bob derive a common AES-GCM symmetric key using the received EC public key and their own private EC key.
 6) Finally, they encrypt/decrypt data with the derived symmetric key.
