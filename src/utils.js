@@ -7,7 +7,10 @@
  * @param {String} str
  * @returns {ArrayBuffer}
  */
-const toArray = (str = '') => {
+const toArray = (str) => {
+  if (typeof str !== 'string') {
+    throw new Error('toArray accepts only string')
+  }
   let chars = []
   for (let i = 0; i < str.length; ++i) {
     chars.push(str.charCodeAt(i))

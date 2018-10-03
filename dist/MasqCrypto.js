@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.MasqCrypto = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.MasqCrypto = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /* global crypto */
@@ -716,8 +716,8 @@ var RSA = function () {
      */
 
   }, {
-    key: 'importRSAPubKeyRaw',
-    value: function importRSAPubKeyRaw(key, name, hash) {
+    key: 'importRSAPubKey',
+    value: function importRSAPubKey(key, name, hash) {
       return crypto.subtle.importKey('jwk', {
         kty: key.kty,
         e: key.e,
@@ -734,25 +734,34 @@ var RSA = function () {
 
     /**
      * Export RSA-PSS public raw key
+     * Do not forget to stringify the exported key to compute
+     * its hash or to store it.
      *
      * @param {CryptoKey} key - The key that we extract raw value
-     * @returns {Promise} - The raw key
+     * @param {string} format - The format ([jwk], spki)
+     * @returns {Promise<Object>} - The key
      */
 
   }, {
-    key: 'exportRSAPubKeyRaw',
-    value: function exportRSAPubKeyRaw(key, format) {
+    key: 'exportRSAPubKey',
+    value: function exportRSAPubKey(key, format) {
       return crypto.subtle.exportKey(format || 'jwk', key || this.publicKey);
     }
   }, {
     key: 'publicKey',
     get: function get() {
       return this._publicKey;
+    },
+    set: function set(key) {
+      this._publicKey = key;
     }
   }, {
     key: 'privateKey',
     get: function get() {
       return this._privateKey;
+    },
+    set: function set(key) {
+      this._privateKey = key;
     }
   }]);
 
@@ -798,9 +807,10 @@ module.exports.utils = _utils2.default;
  * @param {String} str
  * @returns {ArrayBuffer}
  */
-var toArray = function toArray() {
-  var str = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-
+var toArray = function toArray(str) {
+  if (typeof str !== 'string') {
+    throw new Error('Not a string');
+  }
   var chars = [];
   for (var i = 0; i < str.length; ++i) {
     chars.push(str.charCodeAt(i));

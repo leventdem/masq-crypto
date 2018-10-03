@@ -102,8 +102,8 @@ var RSA = function () {
      */
 
   }, {
-    key: 'importRSAPubKeyRaw',
-    value: function importRSAPubKeyRaw(key, name, hash) {
+    key: 'importRSAPubKey',
+    value: function importRSAPubKey(key, name, hash) {
       return crypto.subtle.importKey('jwk', {
         kty: key.kty,
         e: key.e,
@@ -120,25 +120,34 @@ var RSA = function () {
 
     /**
      * Export RSA-PSS public raw key
+     * Do not forget to stringify the exported key to compute
+     * its hash or to store it.
      *
      * @param {CryptoKey} key - The key that we extract raw value
-     * @returns {Promise} - The raw key
+     * @param {string} format - The format ([jwk], spki)
+     * @returns {Promise<Object>} - The key
      */
 
   }, {
-    key: 'exportRSAPubKeyRaw',
-    value: function exportRSAPubKeyRaw(key, format) {
+    key: 'exportRSAPubKey',
+    value: function exportRSAPubKey(key, format) {
       return crypto.subtle.exportKey(format || 'jwk', key || this.publicKey);
     }
   }, {
     key: 'publicKey',
     get: function get() {
       return this._publicKey;
+    },
+    set: function set(key) {
+      this._publicKey = key;
     }
   }, {
     key: 'privateKey',
     get: function get() {
       return this._privateKey;
+    },
+    set: function set(key) {
+      this._privateKey = key;
     }
   }]);
 
