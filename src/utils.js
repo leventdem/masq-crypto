@@ -118,7 +118,7 @@ const hash = (msg, type = 'SHA-256') => {
     {
       name: 'SHA-256'
     },
-    (typeof passPhrase === 'string') ? toArray(msg) : msg
+    (typeof msg === 'string') ? toArray(msg) : msg
   )
     .then(digest => new Uint8Array(digest))
 }

@@ -809,7 +809,7 @@ module.exports.utils = _utils2.default;
  */
 var toArray = function toArray(str) {
   if (typeof str !== 'string') {
-    throw new Error('Not a string');
+    throw new Error('toArray accepts only string');
   }
   var chars = [];
   for (var i = 0; i < str.length; ++i) {
@@ -916,7 +916,7 @@ var hash = function hash(msg) {
 
   return window.crypto.subtle.digest({
     name: 'SHA-256'
-  }, typeof passPhrase === 'string' ? toArray(msg) : msg).then(function (digest) {
+  }, typeof msg === 'string' ? toArray(msg) : msg).then(function (digest) {
     return new Uint8Array(digest);
   });
 };
