@@ -9,9 +9,10 @@
  * @param {String} str
  * @returns {ArrayBuffer}
  */
-var toArray = function toArray() {
-  var str = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-
+var toArray = function toArray(str) {
+  if (typeof str !== 'string') {
+    throw new Error('toArray accepts only string');
+  }
   var chars = [];
   for (var i = 0; i < str.length; ++i) {
     chars.push(str.charCodeAt(i));
@@ -117,7 +118,7 @@ var hash = function hash(msg) {
 
   return window.crypto.subtle.digest({
     name: 'SHA-256'
-  }, typeof passPhrase === 'string' ? toArray(msg) : msg).then(function (digest) {
+  }, typeof msg === 'string' ? toArray(msg) : msg).then(function (digest) {
     return new Uint8Array(digest);
   });
 };

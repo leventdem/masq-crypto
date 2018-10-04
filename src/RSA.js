@@ -25,6 +25,14 @@ class RSA {
     return this._privateKey
   }
 
+  set publicKey (key) {
+    this._publicKey = key
+  }
+
+  set privateKey (key) {
+    this._privateKey = key
+  }
+
   /**
    * Generate a RSA-PSS key pair for signature and verification
    *
@@ -86,7 +94,7 @@ class RSA {
    * @param {jwk} hash - The hash name of the imported RSA key (default : "SHA-256")
    * @returns {Promise} - The imported key as CryptoKey
    */
-  importRSAPubKeyRaw (key, name, hash) {
+  importRSAPubKey (key, name, hash) {
     return crypto.subtle.importKey('jwk', {
       kty: key.kty,
       e: key.e,
@@ -103,11 +111,14 @@ class RSA {
 
   /**
    * Export RSA-PSS public raw key
+   * Do not forget to stringify the exported key to compute
+   * its hash or to store it.
    *
    * @param {CryptoKey} key - The key that we extract raw value
-   * @returns {Promise} - The raw key
+   * @param {string} format - The format ([jwk], spki)
+   * @returns {Promise<Object>} - The key
    */
-  exportRSAPubKeyRaw (key, format) {
+  exportRSAPubKey (key, format) {
     return crypto.subtle.exportKey(format || 'jwk', key || this.publicKey)
   }
 }

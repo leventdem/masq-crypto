@@ -102,11 +102,11 @@ describe('MasqCrypto RSA', function () {
       let cRSA = new MasqCrypto.RSA({ name: 'RSA-PSS' })
       cRSA.genRSAKeyPair()
         .then(keyPair => {
-          cRSA.exportRSAPubKeyRaw(keyPair.publicKey, 'jwk')
+          cRSA.exportRSAPubKey(keyPair.publicKey, 'jwk')
             .then(jwk => {
               should.exist(jwk, 'Has no jwk value')
               // TODO assert JWK params
-              return cRSA.importRSAPubKeyRaw(jwk, 'RSA-PSS', 'SHA-256')
+              return cRSA.importRSAPubKey(jwk, 'RSA-PSS', 'SHA-256')
             })
             .then(k => {
               should.exist(k, 'Has no jwk value')
