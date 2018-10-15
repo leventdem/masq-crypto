@@ -108,8 +108,8 @@ describe('MasqCrypto RSA', function () {
               // TODO assert JWK params
               return cRSA.importRSAPubKey(jwk, 'RSA-PSS', 'SHA-256')
             })
-            .then(k => {
-              should.exist(k, 'Has no jwk value')
+            .then(() => {
+              should.exist(cRSA.publicKey, 'Has no jwk value')
               // chai.expect(sig.length).to.not.equal(0, 'Has empty signature value')
             })
         }).then(done, done)
