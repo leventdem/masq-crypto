@@ -7,6 +7,44 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 /* global crypto */
 
 /**
+   * Verif data (e.g. raw EC public key in case of ECDH)
+   *
+   * @param {CryptoKey} publicKey - The public RSA Key used to verify data signature
+   * @param {arrayBuffer} signature - The signature
+   * @param {arrayBuffer} signedData - Signed data
+   * @returns {boolean} - Result
+   */
+var _verifRSA = function _verifRSA(publicKey, signature, signedData) {
+  return crypto.subtle.verify({
+    name: 'RSA-PSS',
+    saltLength: 16
+  }, publicKey, signature, signedData);
+};
+
+/**
+   * Import RSA-PSS public key
+   *
+   * @param {jwk} key - The key (jwk format) that we want to import
+   * @param {jwk} name - The algorithm name of the imported RSA key (default : "RSA-PSS")
+   * @param {jwk} hash - The hash name of the imported RSA key (default : "SHA-256")
+   * @returns {Promise} - The imported key as CryptoKey
+   */
+var _importRSAPubKey = function _importRSAPubKey(key, name, hash) {
+  return crypto.subtle.importKey('jwk', {
+    kty: key.kty,
+    e: key.e,
+    n: key.n,
+    alg: key.alg,
+    ext: key.ext
+  }, {
+    name: name || 'RSA-PSS',
+    hash: {
+      name: hash || 'SHA-256'
+    }
+  }, false, ['verify']);
+};
+
+/**
  * RSA
  * @constructor
  * @param {Object} params - The RSA cipher parameters
@@ -14,6 +52,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @param {string} params.name The algorithm name  ("RSA-PSS")
  * @param {string} params.modulusLength - The modulus length (4096 default)
  */
+
 var RSA = function () {
   function RSA(params) {
     _classCallCheck(this, RSA);
@@ -66,10 +105,7 @@ var RSA = function () {
   }, {
     key: 'verifRSA',
     value: function verifRSA(publicKey, signature, signedData) {
-      return crypto.subtle.verify({
-        name: 'RSA-PSS',
-        saltLength: 16
-      }, publicKey, signature, signedData);
+      return _verifRSA(publicKey, signature, signedData);
     }
 
     /**
@@ -104,18 +140,11 @@ var RSA = function () {
   }, {
     key: 'importRSAPubKey',
     value: function importRSAPubKey(key, name, hash) {
-      return crypto.subtle.importKey('jwk', {
-        kty: key.kty,
-        e: key.e,
-        n: key.n,
-        alg: key.alg,
-        ext: key.ext
-      }, {
-        name: name || 'RSA-PSS',
-        hash: {
-          name: hash || 'SHA-256'
-        }
-      }, false, ['verify']);
+      var _this2 = this;
+
+      _importRSAPubKey(key, name, hash).then(function (key) {
+        _this2.publicKey = key;
+      });
     }
 
     /**
@@ -155,3 +184,5 @@ var RSA = function () {
 }();
 
 module.exports.RSA = RSA;
+module.exports.RSA.verifRSA = _verifRSA;
+module.exports.RSA.importRSAPubKey = _importRSAPubKey;

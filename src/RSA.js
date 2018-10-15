@@ -1,6 +1,44 @@
 /* global crypto */
 
 /**
+   * Verif data (e.g. raw EC public key in case of ECDH)
+   *
+   * @param {CryptoKey} publicKey - The public RSA Key used to verify data signature
+   * @param {arrayBuffer} signature - The signature
+   * @param {arrayBuffer} signedData - Signed data
+   * @returns {boolean} - Result
+   */
+const verifRSA = (publicKey, signature, signedData) => {
+  return crypto.subtle.verify({
+    name: 'RSA-PSS',
+    saltLength: 16
+  }, publicKey, signature, signedData)
+}
+
+/**
+   * Import RSA-PSS public key
+   *
+   * @param {jwk} key - The key (jwk format) that we want to import
+   * @param {jwk} name - The algorithm name of the imported RSA key (default : "RSA-PSS")
+   * @param {jwk} hash - The hash name of the imported RSA key (default : "SHA-256")
+   * @returns {Promise} - The imported key as CryptoKey
+   */
+const importRSAPubKey = (key, name, hash) => {
+  return crypto.subtle.importKey('jwk', {
+    kty: key.kty,
+    e: key.e,
+    n: key.n,
+    alg: key.alg,
+    ext: key.ext
+  }, {
+    name: name || 'RSA-PSS',
+    hash: {
+      name: hash || 'SHA-256'
+    }
+  }, false, ['verify'])
+}
+
+/**
  * RSA
  * @constructor
  * @param {Object} params - The RSA cipher parameters
@@ -64,10 +102,7 @@ class RSA {
    * @returns {boolean} - Result
    */
   verifRSA (publicKey, signature, signedData) {
-    return crypto.subtle.verify({
-      name: 'RSA-PSS',
-      saltLength: 16
-    }, publicKey, signature, signedData)
+    return verifRSA(publicKey, signature, signedData)
   }
 
   /**
@@ -95,18 +130,9 @@ class RSA {
    * @returns {Promise} - The imported key as CryptoKey
    */
   importRSAPubKey (key, name, hash) {
-    return crypto.subtle.importKey('jwk', {
-      kty: key.kty,
-      e: key.e,
-      n: key.n,
-      alg: key.alg,
-      ext: key.ext
-    }, {
-      name: name || 'RSA-PSS',
-      hash: {
-        name: hash || 'SHA-256'
-      }
-    }, false, ['verify'])
+    importRSAPubKey(key, name, hash).then(key => {
+      this.publicKey = key
+    })
   }
 
   /**
@@ -123,3 +149,5 @@ class RSA {
   }
 }
 module.exports.RSA = RSA
+module.exports.RSA.verifRSA = verifRSA
+module.exports.RSA.importRSAPubKey = importRSAPubKey
